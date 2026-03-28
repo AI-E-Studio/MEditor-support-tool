@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import type { HearingData } from "@/types";
 
@@ -117,6 +118,11 @@ ${strategy}
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { step, hearingData, strategy } = await request.json();
 
     if (step === "strategy") {

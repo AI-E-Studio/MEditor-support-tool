@@ -1,5 +1,6 @@
 "use client";
 
+import { UserMenu } from "@/components/UserMenu";
 import { useState } from "react";
 import type { HearingData } from "@/types";
 
@@ -108,9 +109,12 @@ export default function Home() {
           <h1 className="text-xl font-bold text-(--foreground)">
             提案書AIジェネレーター
           </h1>
-          <span className="text-sm text-(--muted)">
-            動画編集フリーランス向け
-          </span>
+          <div className="flex items-center gap-4 shrink-0">
+            <span className="text-sm text-(--muted) hidden sm:inline">
+              動画編集フリーランス向け
+            </span>
+            <UserMenu />
+          </div>
         </div>
       </header>
 
