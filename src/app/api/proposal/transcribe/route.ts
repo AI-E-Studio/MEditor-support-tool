@@ -1,12 +1,15 @@
 import { auth } from "@/auth";
+import { getMaxAudioUploadBytes } from "@/lib/audioUploadLimits";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-/** OpenAI Whisper の上限に合わせる（Vercel のボディ制限も要確認） */
-const MAX_BYTES = 24 * 1024 * 1024;
+/** Whisper API 上限 25MB とクライアント設定の小さい方（Vercel はエッジで約 4.5MB 制限のため実質はそれ以下） */
+function maxUploadBytes(): number {
+  return Math.min(25 * 1024 * 1024, getMaxAudioUploadBytes());
+}
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -33,9 +36,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (raw.size > MAX_BYTES) {
+  const limit = maxUploadBytes();
+  if (raw.size > limit) {
     return NextResponse.json(
-      { error: "ファイルサイズは 24MB 以下にしてください（Whisper の上限に準拠）" },
+      {
+        error: `ファイルサイズは ${Math.round(limit / (1024 * 1024))}MB 以下にしてください（ホスティング・Whisper の上限内）`,
+      },
       { status: 400 }
     );
   }

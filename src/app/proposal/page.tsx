@@ -3,6 +3,10 @@
 import { UserMenu } from "@/components/UserMenu";
 import Link from "next/link";
 import { useState } from "react";
+import {
+  formatMaxAudioLabel,
+  getMaxAudioUploadBytes,
+} from "@/lib/audioUploadLimits";
 import type { HearingData, ProjectMode } from "@/types";
 
 /** テスト用: 架空クライアントの一貫したサンプルヒアリング（単発制作型） */
@@ -66,8 +70,16 @@ export default function ProposalGeneratorPage() {
   };
 
   const transcribeAudio = async (file: File) => {
-    setLoading(true);
     setError("");
+    const maxBytes = getMaxAudioUploadBytes();
+    if (file.size > maxBytes) {
+      setError(
+        `ファイルが大きすぎます（${formatMaxAudioLabel()} 以下にしてください）。Vercel 本番ではリクエスト全体が約 4.5MB 上限のため 413 になります。音声を短くする・ビットレートを下げて書き出す・分割するか、自ホスト時は NEXT_PUBLIC_MAX_AUDIO_BYTES を調整してください。`
+      );
+      return;
+    }
+
+    setLoading(true);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -82,8 +94,13 @@ export default function ProposalGeneratorPage() {
         data = JSON.parse(rawText) as typeof data;
       } catch {
         if (!res.ok) {
+          if (res.status === 413) {
+            throw new Error(
+              `ファイルが大きすぎます（HTTP 413）。ホスティングのリクエストサイズ上限に達しています。${formatMaxAudioLabel()} 以下のファイルを選ぶか、音声を圧縮・分割してください。`
+            );
+          }
           throw new Error(
-            `文字起こしに失敗しました（HTTP ${res.status}）。ファイルサイズやサーバー制限を確認してください。`
+            `文字起こしに失敗しました（HTTP ${res.status}）。認証・ネットワーク・サーバー設定を確認してください。`
           );
         }
       }
@@ -562,8 +579,14 @@ export default function ProposalGeneratorPage() {
 
             <Section title="音声ファイル">
               <p className="text-sm text-(--muted) mb-3">
-                mp3 / m4a / wav / webm など（最大約24MB）。OpenAI
-                Whisperで日本語文字起こしします。
+                mp3 / m4a / wav / webm など。日本語は OpenAI Whisper
+                で文字起こしします。
+                <strong className="text-(--foreground) font-medium">
+                  {" "}
+                  1 ファイルあたり {formatMaxAudioLabel()} 以下
+                </strong>
+                を推奨します（Vercel 等ではリクエストが約 4.5MB
+                を超えると HTTP 413 になります）。
               </p>
               <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-(--border) rounded-xl p-8 bg-white cursor-pointer hover:border-(--primary)/50 transition-colors">
                 <input
