@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 
 export function UserMenu() {
@@ -16,7 +17,15 @@ export function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 flex-wrap justify-end">
+      {session.user.isAdmin && (
+        <Link
+          href="/admin"
+          className="text-sm text-(--primary) hover:underline font-medium"
+        >
+          管理
+        </Link>
+      )}
       <span className="text-sm text-(--muted) truncate max-w-[200px]">
         {session.user.email ?? session.user.name}
       </span>

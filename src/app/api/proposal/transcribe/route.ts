@@ -4,7 +4,7 @@ import {
   WHISPER_MAX_AUDIO_BYTES,
 } from "@/lib/audioUploadLimits";
 import { del } from "@vercel/blob";
-import OpenAI from "openai";
+import OpenAI, { APIError } from "openai";
 import { toFile } from "openai/uploads";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -23,6 +23,56 @@ function isTrustedBlobUrl(urlStr: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** OpenAI SDK のエラーを文字起こし用レスポンスに変換 */
+function jsonFromOpenAiTranscribeError(e: unknown): {
+  body: { error: string; detail?: string };
+  status: number;
+} {
+  if (e instanceof APIError) {
+    const msg = e.message ?? "";
+    if (e.status === 429) {
+      const quota = /quota|billing|exceeded your current/i.test(msg);
+      return {
+        body: {
+          error: quota
+            ? "OpenAI の利用枠または課金の上限に達しています。platform.openai.com の Usage / Billing でクレジット残高・プランを確認してください。"
+            : "OpenAI へのリクエストが集中しています（レート制限）。しばらく待ってから再度お試しください。",
+          detail: msg,
+        },
+        status: 429,
+      };
+    }
+    if (e.status === 401) {
+      return {
+        body: {
+          error:
+            "OPENAI_API_KEY が無効、または権限がありません。サーバーの環境変数を確認してください。",
+          detail: msg,
+        },
+        status: 502,
+      };
+    }
+    if (e.status === 400) {
+      return {
+        body: {
+          error: "音声形式またはサイズが OpenAI の要件に合いません。",
+          detail: msg,
+        },
+        status: 400,
+      };
+    }
+  }
+  const msg = e instanceof Error ? e.message : String(e);
+  return {
+    body: {
+      error:
+        "文字起こしに失敗しました。形式・サイズ・OPENAI_API_KEY を確認してください。",
+      detail: msg,
+    },
+    status: 500,
+  };
 }
 
 async function transcribeBuffer(
@@ -130,16 +180,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ text });
     } catch (e) {
       console.error("Whisper error (blob url):", e);
-      const msg =
-        e instanceof Error ? e.message : "文字起こしに失敗しました";
-      return NextResponse.json(
-        {
-          error:
-            "文字起こしに失敗しました。形式・サイズ・OPENAI_API_KEY を確認してください。",
-          detail: msg,
-        },
-        { status: 500 }
-      );
+      const { body, status } = jsonFromOpenAiTranscribeError(e);
+      return NextResponse.json(body, { status });
     }
   }
 
@@ -176,15 +218,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ text });
   } catch (e) {
     console.error("Whisper error:", e);
-    const msg =
-      e instanceof Error ? e.message : "文字起こしに失敗しました";
-    return NextResponse.json(
-      {
-        error:
-          "文字起こしに失敗しました。形式・サイズ・OPENAI_API_KEY を確認してください。",
-        detail: msg,
-      },
-      { status: 500 }
-    );
+    const { body, status } = jsonFromOpenAiTranscribeError(e);
+    return NextResponse.json(body, { status });
   }
 }

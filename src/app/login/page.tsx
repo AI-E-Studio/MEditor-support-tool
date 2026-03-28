@@ -1,6 +1,18 @@
 import { signIn } from "@/auth";
 
-export default function LoginPage() {
+function safeCallbackUrl(raw: string | undefined): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  const redirectTo = safeCallbackUrl(callbackUrl);
+
   return (
     <div className="min-h-screen bg-(--background) flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md bg-white border border-(--border) rounded-xl p-8 shadow-sm">
@@ -13,7 +25,7 @@ export default function LoginPage() {
         <form
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: "/" });
+            await signIn("google", { redirectTo });
           }}
         >
           <button
