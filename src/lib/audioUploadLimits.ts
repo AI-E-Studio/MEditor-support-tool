@@ -1,4 +1,14 @@
 /**
+ * Vercel Blob クライアントアップロード経由時の上限（Whisper API 25MB 以内）。
+ * 直接 FormData で Route Handler に送る場合は使わない（413 回避のため別経路）。
+ */
+export const MAX_BLOB_AUDIO_BYTES = 25 * 1024 * 1024;
+
+export function formatMaxBlobAudioLabel(): string {
+  return `${Math.round(MAX_BLOB_AUDIO_BYTES / (1024 * 1024))}MB`;
+}
+
+/**
  * ブラウザから Route Handler へ送る音声の推奨上限。
  * Vercel サーバーレスはリクエストボディが約 4.5MB 程度で 413 になるため、
  * デフォルトは余裕を見て 4MB（環境変数で上書き可・自ホスト向け）。

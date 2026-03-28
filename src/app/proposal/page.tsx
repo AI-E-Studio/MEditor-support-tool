@@ -2,10 +2,13 @@
 
 import { UserMenu } from "@/components/UserMenu";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { upload } from "@vercel/blob/client";
 import {
   formatMaxAudioLabel,
+  formatMaxBlobAudioLabel,
   getMaxAudioUploadBytes,
+  MAX_BLOB_AUDIO_BYTES,
 } from "@/lib/audioUploadLimits";
 import type { HearingData, ProjectMode } from "@/types";
 
@@ -55,6 +58,25 @@ export default function ProposalGeneratorPage() {
   const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  /** BLOB_READ_WRITE_TOKEN があるとき true（大きい音声は Blob 経由） */
+  const [clientBlobUpload, setClientBlobUpload] = useState<boolean | null>(
+    null
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/proposal/upload-config", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { clientBlobUpload?: boolean }) => {
+        if (!cancelled) setClientBlobUpload(Boolean(d.clientBlobUpload));
+      })
+      .catch(() => {
+        if (!cancelled) setClientBlobUpload(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const stepLabels =
     entryMode === "audio"
@@ -71,23 +93,63 @@ export default function ProposalGeneratorPage() {
 
   const transcribeAudio = async (file: File) => {
     setError("");
-    const maxBytes = getMaxAudioUploadBytes();
+
+    let useBlob = clientBlobUpload;
+    if (useBlob === null) {
+      try {
+        const cfg = await fetch("/api/proposal/upload-config", {
+          cache: "no-store",
+        }).then((r) => r.json());
+        useBlob = Boolean(cfg.clientBlobUpload);
+        setClientBlobUpload(useBlob);
+      } catch {
+        useBlob = false;
+        setClientBlobUpload(false);
+      }
+    }
+
+    const maxBytes = useBlob ? MAX_BLOB_AUDIO_BYTES : getMaxAudioUploadBytes();
+    const maxLabel = useBlob ? formatMaxBlobAudioLabel() : formatMaxAudioLabel();
+
     if (file.size > maxBytes) {
       setError(
-        `ファイルが大きすぎます（${formatMaxAudioLabel()} 以下にしてください）。Vercel 本番ではリクエスト全体が約 4.5MB 上限のため 413 になります。音声を短くする・ビットレートを下げて書き出す・分割するか、自ホスト時は NEXT_PUBLIC_MAX_AUDIO_BYTES を調整してください。`
+        useBlob
+          ? `ファイルが大きすぎます（${maxLabel} 以下にしてください）。`
+          : `ファイルが大きすぎます（${maxLabel} 以下にしてください）。Vercel 本番ではリクエスト全体が約 4.5MB 上限のため 413 になります。音声を短くする・ビットレートを下げて書き出す・分割するか、Vercel Blob（BLOB_READ_WRITE_TOKEN）を設定するとより大きなファイルを送れます。自ホスト時は NEXT_PUBLIC_MAX_AUDIO_BYTES を調整してください。`
       );
       return;
     }
 
     setLoading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/proposal/transcribe", {
-        method: "POST",
-        body: fd,
-        credentials: "same-origin",
-      });
+      let res: Response;
+
+      if (useBlob) {
+        const safe =
+          file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80) || "audio";
+        const pathname = `proposal-audio/${Date.now()}-${safe}`;
+        const blobResult = await upload(pathname, file, {
+          access: "public",
+          handleUploadUrl: "/api/proposal/blob-upload",
+          contentType: file.type || undefined,
+          multipart: file.size > 4 * 1024 * 1024,
+        });
+        res = await fetch("/api/proposal/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ url: blobResult.url }),
+        });
+      } else {
+        const fd = new FormData();
+        fd.append("file", file);
+        res = await fetch("/api/proposal/transcribe", {
+          method: "POST",
+          body: fd,
+          credentials: "same-origin",
+        });
+      }
+
       const rawText = await res.text();
       let data: { error?: string; detail?: string; text?: string } = {};
       try {
@@ -96,7 +158,7 @@ export default function ProposalGeneratorPage() {
         if (!res.ok) {
           if (res.status === 413) {
             throw new Error(
-              `ファイルが大きすぎます（HTTP 413）。ホスティングのリクエストサイズ上限に達しています。${formatMaxAudioLabel()} 以下のファイルを選ぶか、音声を圧縮・分割してください。`
+              `ファイルが大きすぎます（HTTP 413）。ホスティングのリクエストサイズ上限に達しています。${formatMaxAudioLabel()} 以下のファイルを選ぶか、音声を圧縮・分割するか、Vercel で BLOB_READ_WRITE_TOKEN を設定して Blob 経由でアップロードしてください。`
             );
           }
           throw new Error(
@@ -581,12 +643,25 @@ export default function ProposalGeneratorPage() {
               <p className="text-sm text-(--muted) mb-3">
                 mp3 / m4a / wav / webm など。日本語は OpenAI Whisper
                 で文字起こしします。
-                <strong className="text-(--foreground) font-medium">
-                  {" "}
-                  1 ファイルあたり {formatMaxAudioLabel()} 以下
-                </strong>
-                を推奨します（Vercel 等ではリクエストが約 4.5MB
-                を超えると HTTP 413 になります）。
+                {clientBlobUpload ? (
+                  <>
+                    <strong className="text-(--foreground) font-medium">
+                      {" "}
+                      1 ファイルあたり約 {formatMaxBlobAudioLabel()} まで
+                    </strong>
+                    （Vercel Blob 経由。環境に BLOB_READ_WRITE_TOKEN あり）
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-(--foreground) font-medium">
+                      {" "}
+                      1 ファイルあたり {formatMaxAudioLabel()} 以下
+                    </strong>
+                    を推奨します（直接アップロード。Vercel では約 4.5MB
+                    を超えると HTTP 413）。大きなファイルはダッシュボードで
+                    Blob を作成し BLOB_READ_WRITE_TOKEN を設定してください。
+                  </>
+                )}
               </p>
               <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-(--border) rounded-xl p-8 bg-white cursor-pointer hover:border-(--primary)/50 transition-colors">
                 <input
