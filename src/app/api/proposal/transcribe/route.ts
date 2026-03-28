@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import {
   getMaxAudioUploadBytes,
   MAX_BLOB_AUDIO_BYTES,
+  WHISPER_MAX_AUDIO_BYTES,
 } from "@/lib/audioUploadLimits";
 import { del } from "@vercel/blob";
 import OpenAI from "openai";
@@ -10,9 +11,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-/** Whisper API 上限 25MB とクライアント設定の小さい方（FormData 直送のとき） */
+/** Whisper 上限とクライアント設定の小さい方（FormData 直送のとき） */
 function maxFormUploadBytes(): number {
-  return Math.min(25 * 1024 * 1024, getMaxAudioUploadBytes());
+  return Math.min(WHISPER_MAX_AUDIO_BYTES, getMaxAudioUploadBytes());
 }
 
 function isTrustedBlobUrl(urlStr: string): boolean {
@@ -105,6 +106,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: `ファイルサイズは ${Math.round(MAX_BLOB_AUDIO_BYTES / (1024 * 1024))}MB 以下にしてください`,
+        },
+        { status: 400 }
+      );
+    }
+    if (buf.length > WHISPER_MAX_AUDIO_BYTES) {
+      return NextResponse.json(
+        {
+          error: `文字起こし（Whisper）は ${Math.round(WHISPER_MAX_AUDIO_BYTES / (1024 * 1024))}MB までです。録音を分割するか、ビットレートを下げて ${Math.round(WHISPER_MAX_AUDIO_BYTES / (1024 * 1024))}MB 以下にしてください。`,
         },
         { status: 400 }
       );

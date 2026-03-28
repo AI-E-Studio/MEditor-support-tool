@@ -1,11 +1,18 @@
 /**
- * Vercel Blob クライアントアップロード経由時の上限（Whisper API 25MB 以内）。
- * 直接 FormData で Route Handler に送る場合は使わない（413 回避のため別経路）。
+ * Vercel Blob クライアントアップロード経由時の上限（413 回避・トークン発行用）。
+ * 直接 FormData で Route Handler に送る場合は使わない。
  */
-export const MAX_BLOB_AUDIO_BYTES = 25 * 1024 * 1024;
+export const MAX_BLOB_AUDIO_BYTES = 50 * 1024 * 1024;
+
+/** OpenAI Whisper（whisper-1）の音声ファイル上限。これを超えると文字起こしできない。 */
+export const WHISPER_MAX_AUDIO_BYTES = 25 * 1024 * 1024;
 
 export function formatMaxBlobAudioLabel(): string {
   return `${Math.round(MAX_BLOB_AUDIO_BYTES / (1024 * 1024))}MB`;
+}
+
+export function formatWhisperMaxAudioLabel(): string {
+  return `${Math.round(WHISPER_MAX_AUDIO_BYTES / (1024 * 1024))}MB`;
 }
 
 /**

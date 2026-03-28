@@ -7,6 +7,7 @@ import { upload } from "@vercel/blob/client";
 import {
   formatMaxAudioLabel,
   formatMaxBlobAudioLabel,
+  formatWhisperMaxAudioLabel,
   getMaxAudioUploadBytes,
   MAX_BLOB_AUDIO_BYTES,
 } from "@/lib/audioUploadLimits";
@@ -647,9 +648,11 @@ export default function ProposalGeneratorPage() {
                   <>
                     <strong className="text-(--foreground) font-medium">
                       {" "}
-                      1 ファイルあたり約 {formatMaxBlobAudioLabel()} まで
+                      アップロードは 1 ファイルあたり約 {formatMaxBlobAudioLabel()} まで
                     </strong>
-                    （Vercel Blob 経由。環境に BLOB_READ_WRITE_TOKEN あり）
+                    （Vercel Blob 経由）。
+                    文字起こしは OpenAI Whisper の上限により約{" "}
+                    {formatWhisperMaxAudioLabel()} までです。
                   </>
                 ) : (
                   <>
