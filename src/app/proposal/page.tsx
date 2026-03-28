@@ -139,7 +139,7 @@ export default function ProposalGeneratorPage() {
           </div>
           <div className="flex items-center gap-4 shrink-0">
             <span className="text-sm text-(--muted) hidden sm:inline">
-              動画編集フリーランス向け
+              Vi-Net動画編集者の総合サポートツール
             </span>
             <UserMenu />
           </div>
