@@ -247,6 +247,159 @@ function buildProposalPrompt(data: HearingData, strategy: string): string {
     : buildProposalPromptSingle(data, strategy);
 }
 
+// --- 音声文字起こしベース（ヒアリングフォーム非使用）---
+
+function transcriptPreamble(mode: ProjectMode): string {
+  return `## 案件タイプ（ユーザー選択）
+- ${projectModeLabel(mode)}
+
+## 音声の文字起こし（原文）
+以下はクライアントとの打ち合わせ・ヒアリング音声を **Whisper で文字起こししたテキスト**です。
+会話の順序・口語・重複はそのまま活かしつつ、実務の提案に使えるよう解釈してください。
+文中にない情報は**無理に埋めず**、「要確認」「ヒアリング不足」として明示してください。
+
+${"```"}
+`;
+}
+
+function transcriptClosing(): string {
+  return `\n${"```"}\n`;
+}
+
+function buildStrategyPromptYoutubeFromTranscript(
+  transcript: string
+): string {
+  return `あなたは動画マーケティングの戦略コンサルタントです。
+入力は**音声ヒアリングの文字起こし**のみです。以下は **YouTubeチャンネルの運用・定期投稿** を主題に含む想定で分析してください（会話が単発制作のみでも、運用に転用できる示唆があれば記載）。
+
+${transcriptPreamble("youtube_operation")}${transcript}${transcriptClosing()}
+
+---
+
+## 出力上の必須方針（YouTube運用向け・文字起こし版）
+- 文字起こしに現れない場合は推測で固めず、**確認すべき質問リスト**を最後に列挙してよい。
+- **チャンネル・継続投稿**の観点（シリーズ、頻度、テンプレ、納品サイクル、分析）を優先。
+- YouTube 固有（視聴維持、サムネ/タイトル、ショートと長尺）に触れる。
+
+以下の構成で戦略を出力してください（Markdown形式）:
+
+### 1. 現状分析（文字起こしから読み取れる事実の整理）
+### 2. ターゲット視聴者と視聴行動
+### 3. チャンネル・コンテンツ戦略
+### 4. 編集・制作オペレーション案
+### 5. 成長・改善の打ち手
+### 6. KPIと改善サイクル
+### 7. 追加で確認したいヒアリング項目（箇条書き）`;
+}
+
+function buildStrategyPromptSingleFromTranscript(transcript: string): string {
+  return `あなたは動画マーケティングの戦略コンサルタントです。
+入力は**音声ヒアリングの文字起こし**のみです。以下は **1本または短期で完結する動画制作**（PV・採用・プロモ等）を主題に含む想定で分析してください。
+
+${transcriptPreamble("single_production")}${transcript}${transcriptClosing()}
+
+---
+
+## 出力上の必須方針（単発制作向け・文字起こし版）
+- 推測は「仮説」として明示。不足情報は **要確認** に落とす。
+- **納品物・工程・修正・スケジュール**を重視。継続運用の話に寄せすぎない。
+
+以下の構成で戦略を出力してください（Markdown形式）:
+
+### 1. 現状分析
+### 2. ターゲットと訴求の芯
+### 3. 単発案件としての制作戦略
+### 4. 工程・スケジュール案
+### 5. 差別化と品質
+### 6. 成果の見方
+### 7. 追加で確認したいヒアリング項目（箇条書き）`;
+}
+
+function buildStrategyFromTranscript(
+  transcript: string,
+  mode: ProjectMode
+): string {
+  return mode === "youtube_operation"
+    ? buildStrategyPromptYoutubeFromTranscript(transcript)
+    : buildStrategyPromptSingleFromTranscript(transcript);
+}
+
+function buildProposalPromptYoutubeFromTranscript(
+  transcript: string,
+  strategy: string
+): string {
+  return `あなたはプロの動画編集フリーランスです。
+根拠データは**ヒアリング音声の文字起こし**と、それに基づく**戦略ドラフト**です。YouTube運用・継続案件としての提案書にしてください。
+
+${transcriptPreamble("youtube_operation")}${transcript}${transcriptClosing()}
+
+## 戦略分析結果
+${strategy}
+
+---
+
+以下の構成で提案書を作成してください（Markdown形式）。文字起こしにない固有名・数値は捏造せず、「要確認」とするか一般的表現にとどめてください。
+
+# ご提案書
+
+## はじめに
+## 現状の課題と解決の方向性
+## ご提案内容
+### チャンネル・コンテンツ方針（要約）
+### 制作・納品体制（継続運用）
+### スケジュール・マイルストーン
+### 期待される効果とKPI
+## お見積り（継続案件の見せ方）
+## 制作体制・実績
+## 今後の進め方
+
+※ 敬語・提出可能な品質。
+※ 単発PVのみの体裁に寄せすぎないこと。`;
+}
+
+function buildProposalPromptSingleFromTranscript(
+  transcript: string,
+  strategy: string
+): string {
+  return `あなたはプロの動画編集フリーランスです。
+根拠データは**ヒアリング音声の文字起こし**と、それに基づく**戦略ドラフト**です。**単発・短期納品**の提案書にしてください。
+
+${transcriptPreamble("single_production")}${transcript}${transcriptClosing()}
+
+## 戦略分析結果
+${strategy}
+
+---
+
+以下の構成で提案書を作成してください（Markdown形式）。文字起こしにない固有名・数値は捏造せず、「要確認」とするか一般的表現にとどめてください。
+
+# ご提案書
+
+## はじめに
+## 現状の課題と解決の方向性
+## ご提案内容
+### 動画コンセプト
+### 制作内容・納品範囲
+### 工程・スケジュール
+### 期待される効果
+## お見積り
+## 制作体制・実績
+## 今後の進め方
+
+※ 敬語・提出可能な品質。
+※ YouTube長期運用の提案に寄せすぎないこと。`;
+}
+
+function buildProposalFromTranscript(
+  transcript: string,
+  strategy: string,
+  mode: ProjectMode
+): string {
+  return mode === "youtube_operation"
+    ? buildProposalPromptYoutubeFromTranscript(transcript, strategy)
+    : buildProposalPromptSingleFromTranscript(transcript, strategy);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -254,7 +407,81 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { step, hearingData: rawHearing, strategy } = await request.json();
+    const body = await request.json();
+    const {
+      step,
+      hearingData: rawHearing,
+      strategy,
+      transcript,
+      projectMode: rawProjectMode,
+    } = body as {
+      step: string;
+      hearingData?: HearingData;
+      strategy?: string;
+      transcript?: string;
+      projectMode?: ProjectMode;
+    };
+
+    const resolveMode = (): ProjectMode =>
+      rawProjectMode === "youtube_operation"
+        ? "youtube_operation"
+        : "single_production";
+
+    if (step === "strategy_from_transcript") {
+      const t = typeof transcript === "string" ? transcript.trim() : "";
+      if (!t) {
+        return NextResponse.json(
+          { error: "文字起こしテキストがありません" },
+          { status: 400 }
+        );
+      }
+      const message = await client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        messages: [
+          {
+            role: "user",
+            content: buildStrategyFromTranscript(t, resolveMode()),
+          },
+        ],
+      });
+      const text =
+        message.content[0].type === "text" ? message.content[0].text : "";
+      return NextResponse.json({ result: text });
+    }
+
+    if (step === "proposal_from_transcript") {
+      const t = typeof transcript === "string" ? transcript.trim() : "";
+      if (!t || typeof strategy !== "string" || !strategy.trim()) {
+        return NextResponse.json(
+          { error: "文字起こしまたは戦略テキストがありません" },
+          { status: 400 }
+        );
+      }
+      const message = await client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
+        messages: [
+          {
+            role: "user",
+            content: buildProposalFromTranscript(t, strategy, resolveMode()),
+          },
+        ],
+      });
+      const text =
+        message.content[0].type === "text" ? message.content[0].text : "";
+      return NextResponse.json({ result: text });
+    }
+
+    if (
+      (step === "strategy" || step === "proposal") &&
+      (!rawHearing || typeof rawHearing !== "object")
+    ) {
+      return NextResponse.json(
+        { error: "ヒアリングデータがありません" },
+        { status: 400 }
+      );
+    }
 
     const hearingData: HearingData = {
       ...(rawHearing as HearingData),

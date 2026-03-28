@@ -39,19 +39,23 @@ const initialHearing: HearingData = {
     "公開後3ヶ月でメイン動画の再生10万回以上、サイト経由の新規会員月200件、法人お問い合わせ月15件以上（前年比120%）。",
 };
 
-const STEPS = [
-  { num: 1, label: "ヒアリング" },
-  { num: 2, label: "戦略立案" },
-  { num: 3, label: "提案書作成" },
-];
+type EntryMode = "choose" | "manual" | "audio";
 
 export default function ProposalGeneratorPage() {
+  const [entryMode, setEntryMode] = useState<EntryMode>("choose");
   const [step, setStep] = useState(1);
   const [hearing, setHearing] = useState<HearingData>(initialHearing);
   const [strategy, setStrategy] = useState("");
   const [proposal, setProposal] = useState("");
+  /** 音声ルート: Whisper 後の文字起こし（編集可） */
+  const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const stepLabels =
+    entryMode === "audio"
+      ? ["音声", "戦略立案", "提案書作成"]
+      : ["ヒアリング", "戦略立案", "提案書作成"];
 
   const updateField = (field: keyof HearingData, value: string) => {
     setHearing((prev) => ({ ...prev, [field]: value }));
@@ -61,18 +65,70 @@ export default function ProposalGeneratorPage() {
     setHearing((prev) => ({ ...prev, projectMode: mode }));
   };
 
+  const transcribeAudio = async (file: File) => {
+    setLoading(true);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/proposal/transcribe", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : "文字起こしに失敗しました"
+        );
+      }
+      setTranscript(typeof data.text === "string" ? data.text : "");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "エラーが発生しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const generateStrategy = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/proposal/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ step: "strategy", hearingData: hearing }),
-      });
-      if (!res.ok) throw new Error("戦略生成に失敗しました");
-      const data = await res.json();
-      setStrategy(data.result);
+      if (entryMode === "audio") {
+        if (!transcript.trim()) {
+          setError("文字起こしテキストがありません。音声をアップロードしてください。");
+          setLoading(false);
+          return;
+        }
+        const res = await fetch("/api/proposal/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            step: "strategy_from_transcript",
+            transcript,
+            projectMode: hearing.projectMode,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(
+            typeof data.error === "string" ? data.error : "戦略生成に失敗しました"
+          );
+        }
+        setStrategy(data.result);
+      } else {
+        const res = await fetch("/api/proposal/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ step: "strategy", hearingData: hearing }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(
+            typeof data.error === "string" ? data.error : "戦略生成に失敗しました"
+          );
+        }
+        setStrategy(data.result);
+      }
       setStep(2);
     } catch (e) {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
@@ -85,18 +141,46 @@ export default function ProposalGeneratorPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/proposal/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          step: "proposal",
-          hearingData: hearing,
-          strategy,
-        }),
-      });
-      if (!res.ok) throw new Error("提案書生成に失敗しました");
-      const data = await res.json();
-      setProposal(data.result);
+      if (entryMode === "audio") {
+        const res = await fetch("/api/proposal/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            step: "proposal_from_transcript",
+            transcript,
+            strategy,
+            projectMode: hearing.projectMode,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(
+            typeof data.error === "string"
+              ? data.error
+              : "提案書生成に失敗しました"
+          );
+        }
+        setProposal(data.result);
+      } else {
+        const res = await fetch("/api/proposal/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            step: "proposal",
+            hearingData: hearing,
+            strategy,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(
+            typeof data.error === "string"
+              ? data.error
+              : "提案書生成に失敗しました"
+          );
+        }
+        setProposal(data.result);
+      }
       setStep(3);
     } catch (e) {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
@@ -110,10 +194,12 @@ export default function ProposalGeneratorPage() {
   };
 
   const resetAll = () => {
+    setEntryMode("choose");
     setStep(1);
     setHearing(initialHearing);
     setStrategy("");
     setProposal("");
+    setTranscript("");
     setError("");
   };
 
@@ -146,33 +232,78 @@ export default function ProposalGeneratorPage() {
         </div>
       </header>
 
-      {/* Step Indicator */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {STEPS.map((s, i) => (
-            <div key={s.num} className="flex items-center gap-2">
-              <div
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  step >= s.num
-                    ? "bg-(--primary) text-white"
-                    : "bg-(--accent) text-(--muted)"
-                }`}
+        {entryMode === "choose" && (
+          <div className="space-y-6 mb-8">
+            <h2 className="text-lg font-semibold text-(--foreground) text-center">
+              入力方法を選んでください
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setEntryMode("manual");
+                  setStep(1);
+                }}
+                className="text-left rounded-xl border border-(--border) bg-white p-6 shadow-sm hover:border-(--primary) hover:shadow-md transition-all cursor-pointer"
               >
-                <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs">
-                  {step > s.num ? "✓" : s.num}
+                <span className="font-bold text-(--foreground)">
+                  手入力でヒアリング
                 </span>
-                {s.label}
-              </div>
-              {i < STEPS.length - 1 && (
-                <div
-                  className={`w-8 h-0.5 ${
-                    step > s.num ? "bg-(--primary)" : "bg-(--border)"
-                  }`}
-                />
-              )}
+                <p className="text-sm text-(--muted) mt-2 leading-relaxed">
+                  フォームに沿って項目を入力し、戦略→提案書の順で生成します。
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEntryMode("audio");
+                  setStep(1);
+                  setTranscript("");
+                }}
+                className="text-left rounded-xl border border-(--border) bg-white p-6 shadow-sm hover:border-(--primary) hover:shadow-md transition-all cursor-pointer"
+              >
+                <span className="font-bold text-(--foreground)">
+                  音声をアップロード
+                </span>
+                <p className="text-sm text-(--muted) mt-2 leading-relaxed">
+                  ヒアリング音声を文字起こし（Whisper）し、内容をもとに戦略・提案書を生成します。
+                </p>
+              </button>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {entryMode !== "choose" && (
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {stepLabels.map((label, i) => {
+              const num = i + 1;
+              return (
+                <div key={label} className="flex items-center gap-2">
+                  <div
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                      step >= num
+                        ? "bg-(--primary) text-white"
+                        : "bg-(--accent) text-(--muted)"
+                    }`}
+                  >
+                    <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs">
+                      {step > num ? "✓" : num}
+                    </span>
+                    {label}
+                  </div>
+                  {i < stepLabels.length - 1 && (
+                    <div
+                      className={`w-8 h-0.5 ${
+                        step > num ? "bg-(--primary)" : "bg-(--border)"
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -180,8 +311,7 @@ export default function ProposalGeneratorPage() {
           </div>
         )}
 
-        {/* Step 1: Hearing Form */}
-        {step === 1 && (
+        {entryMode === "manual" && step === 1 && (
           <div className="space-y-6">
             <Section title="案件の種類">
               <p className="text-sm text-(--muted) mb-4">
@@ -348,7 +478,14 @@ export default function ProposalGeneratorPage() {
               />
             </Section>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex flex-wrap justify-between gap-3 pt-4">
+              <button
+                type="button"
+                onClick={resetAll}
+                className="px-4 py-2 text-sm text-(--muted) border border-(--border) rounded-lg hover:bg-(--accent) cursor-pointer"
+              >
+                ← 入力方法に戻る
+              </button>
               <button
                 onClick={generateStrategy}
                 disabled={loading || !hearing.clientName || !hearing.videoPurpose}
@@ -357,6 +494,115 @@ export default function ProposalGeneratorPage() {
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <Spinner /> AI戦略を生成中...
+                  </span>
+                ) : (
+                  "AIで戦略を立案する →"
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {entryMode === "audio" && step === 1 && (
+          <div className="space-y-6">
+            <Section title="案件の種類">
+              <p className="text-sm text-(--muted) mb-4">
+                音声の内容に合わせて、戦略・提案の観点を選びます（手入力モードと同じ2タイプ）。
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setProjectMode("youtube_operation")}
+                  className={`text-left rounded-lg border p-4 transition-colors cursor-pointer ${
+                    hearing.projectMode === "youtube_operation"
+                      ? "border-(--primary) bg-(--primary)/5 ring-2 ring-(--primary)/20"
+                      : "border-(--border) bg-white hover:bg-(--accent)"
+                  }`}
+                >
+                  <span className="font-semibold text-(--foreground)">
+                    YouTube運用・チャンネル型
+                  </span>
+                  <p className="text-sm text-(--muted) mt-2 leading-relaxed">
+                    定期投稿・シリーズ・チャンネル成長の文脈で分析・提案します。
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProjectMode("single_production")}
+                  className={`text-left rounded-lg border p-4 transition-colors cursor-pointer ${
+                    hearing.projectMode === "single_production"
+                      ? "border-(--primary) bg-(--primary)/5 ring-2 ring-(--primary)/20"
+                      : "border-(--border) bg-white hover:bg-(--accent)"
+                  }`}
+                >
+                  <span className="font-semibold text-(--foreground)">
+                    単発制作型（PV・採用・プロモ等）
+                  </span>
+                  <p className="text-sm text-(--muted) mt-2 leading-relaxed">
+                    1本完結・短期納品の文脈で分析・提案します。
+                  </p>
+                </button>
+              </div>
+            </Section>
+
+            <Section title="音声ファイル">
+              <p className="text-sm text-(--muted) mb-3">
+                mp3 / m4a / wav / webm など（最大約24MB）。OpenAI
+                Whisperで日本語文字起こしします。
+              </p>
+              <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-(--border) rounded-xl p-8 bg-white cursor-pointer hover:border-(--primary)/50 transition-colors">
+                <input
+                  type="file"
+                  accept="audio/*,.mp3,.m4a,.wav,.webm,.mpeg,.mp4"
+                  className="hidden"
+                  disabled={loading}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void transcribeAudio(f);
+                    e.target.value = "";
+                  }}
+                />
+                <span className="text-(--primary) font-medium">
+                  クリックして音声を選択
+                </span>
+                <span className="text-xs text-(--muted) mt-1">
+                  またはファイルをドラッグ（ブラウザにより挙動が異なります）
+                </span>
+              </label>
+            </Section>
+
+            <Section title="文字起こし（編集できます）">
+              <div>
+                <label className="block text-sm font-medium text-(--foreground) mb-1">
+                  Whisperの結果
+                </label>
+                <textarea
+                  value={transcript}
+                  onChange={(e) => setTranscript(e.target.value)}
+                  placeholder="音声をアップロードするとここに表示されます。誤認識があれば直接修正してください。"
+                  rows={14}
+                  className="w-full px-3 py-2 border border-(--border) rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-(--primary) focus:border-transparent resize-y bg-white min-h-[200px]"
+                />
+              </div>
+            </Section>
+
+            <div className="flex flex-wrap justify-between gap-3 pt-4">
+              <button
+                type="button"
+                onClick={resetAll}
+                className="px-4 py-2 text-sm text-(--muted) border border-(--border) rounded-lg hover:bg-(--accent) cursor-pointer"
+              >
+                ← 入力方法に戻る
+              </button>
+              <button
+                type="button"
+                onClick={generateStrategy}
+                disabled={loading || !transcript.trim()}
+                className="px-8 py-3 bg-(--primary) text-white rounded-lg font-medium hover:bg-(--primary-hover) disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Spinner /> 処理中...
                   </span>
                 ) : (
                   "AIで戦略を立案する →"
@@ -389,7 +635,9 @@ export default function ProposalGeneratorPage() {
                 onClick={() => setStep(1)}
                 className="px-6 py-3 border border-(--border) rounded-lg text-(--muted) hover:bg-(--accent) transition-colors cursor-pointer"
               >
-                ← ヒアリングに戻る
+                {entryMode === "audio"
+                  ? "← 音声・文字起こしに戻る"
+                  : "← ヒアリングに戻る"}
               </button>
               <button
                 onClick={generateProposal}
