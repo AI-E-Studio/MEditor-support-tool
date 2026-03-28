@@ -3,25 +3,27 @@
 import { useState } from "react";
 import type { HearingData } from "@/types";
 
+/** テスト用: 各項目にプレースホルダ相当のサンプルを入れた初期値 */
 const initialHearing: HearingData = {
-  clientName: "",
-  industry: "",
-  businessOverview: "",
-  videoType: "",
-  videoPurpose: "",
-  targetAudience: "",
-  publishPlatform: "",
-  budget: "",
-  deadline: "",
-  videoLength: "",
-  quantity: "",
-  existingMaterials: "",
-  referenceVideos: "",
-  toneAndManner: "",
-  specialRequests: "",
-  currentChallenges: "",
-  competitorInfo: "",
-  kpi: "",
+  clientName: "例: 株式会社〇〇",
+  industry: "例: 飲食業、IT、不動産、美容...",
+  businessOverview: "事業内容や主要サービスについて",
+  videoType: "例: 企業VP、商品PR、採用動画、SNS広告、YouTube...",
+  videoPurpose: "何を達成したいか（認知拡大、CV向上、ブランディング等）",
+  targetAudience: "例: 20-30代女性、経営者層、就活生...",
+  publishPlatform: "例: YouTube、Instagram、TikTok、自社サイト...",
+  budget: "例: 10万円〜20万円",
+  deadline: "例: 2週間後、来月末まで",
+  videoLength: "例: 30秒、1分、3-5分",
+  quantity: "例: 1本、月4本（定期）",
+  existingMaterials: "撮影済み素材の有無、ロゴ・ブランドガイドラインなど",
+  referenceVideos: "イメージに近い動画のURLや説明",
+  toneAndManner: "例: 高級感、カジュアル、ポップ、シック...",
+  specialRequests:
+    "その他の要望（ナレーション、BGM、字幕、モーショングラフィックス等）",
+  currentChallenges: "動画施策における現在の課題や困りごと",
+  competitorInfo: "競合他社の動画施策について知っていること",
+  kpi: "例: 再生回数10万回、CV率2%向上、フォロワー1000人増...",
 };
 
 const STEPS = [
