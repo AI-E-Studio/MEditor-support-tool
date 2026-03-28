@@ -3,10 +3,11 @@
 import { UserMenu } from "@/components/UserMenu";
 import Link from "next/link";
 import { useState } from "react";
-import type { HearingData } from "@/types";
+import type { HearingData, ProjectMode } from "@/types";
 
-/** テスト用: 架空クライアントの一貫したサンプルヒアリング */
+/** テスト用: 架空クライアントの一貫したサンプルヒアリング（単発制作型） */
 const initialHearing: HearingData = {
+  projectMode: "single_production",
   clientName: "株式会社グリーンリーフ（架空・オーガニック食品）",
   industry: "食品小売・EC（健康志向・オーガニック専門）",
   businessOverview:
@@ -54,6 +55,10 @@ export default function ProposalGeneratorPage() {
 
   const updateField = (field: keyof HearingData, value: string) => {
     setHearing((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const setProjectMode = (mode: ProjectMode) => {
+    setHearing((prev) => ({ ...prev, projectMode: mode }));
   };
 
   const generateStrategy = async () => {
@@ -178,6 +183,46 @@ export default function ProposalGeneratorPage() {
         {/* Step 1: Hearing Form */}
         {step === 1 && (
           <div className="space-y-6">
+            <Section title="案件の種類">
+              <p className="text-sm text-(--muted) mb-4">
+                実務では大きく「継続的なYouTube運用」と「1本完結の動画制作」に分かれます。どちらかを選ぶと、戦略・提案書の章立てと観点が切り替わります。
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setProjectMode("youtube_operation")}
+                  className={`text-left rounded-lg border p-4 transition-colors cursor-pointer ${
+                    hearing.projectMode === "youtube_operation"
+                      ? "border-(--primary) bg-(--primary)/5 ring-2 ring-(--primary)/20"
+                      : "border-(--border) bg-white hover:bg-(--accent)"
+                  }`}
+                >
+                  <span className="font-semibold text-(--foreground)">
+                    YouTube運用・チャンネル型
+                  </span>
+                  <p className="text-sm text-(--muted) mt-2 leading-relaxed">
+                    定期投稿、シリーズ、ショート連携、チャンネル成長・分析を前提にした提案。
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProjectMode("single_production")}
+                  className={`text-left rounded-lg border p-4 transition-colors cursor-pointer ${
+                    hearing.projectMode === "single_production"
+                      ? "border-(--primary) bg-(--primary)/5 ring-2 ring-(--primary)/20"
+                      : "border-(--border) bg-white hover:bg-(--accent)"
+                  }`}
+                >
+                  <span className="font-semibold text-(--foreground)">
+                    単発制作型（PV・採用・プロモ等）
+                  </span>
+                  <p className="text-sm text-(--muted) mt-2 leading-relaxed">
+                    企業VP、採用、イベント、プロモなど、納品が1本または短期で完結する案件向け。
+                  </p>
+                </button>
+              </div>
+            </Section>
+
             <Section title="クライアント基本情報">
               <Field
                 label="会社名 / クライアント名"

@@ -1,4 +1,10 @@
+/** 実務上の案件タイプ。プロンプトの構成・観点が切り替わる */
+export type ProjectMode = "youtube_operation" | "single_production";
+
 export interface HearingData {
+  /** YouTube運用（定期投稿・シリーズ） / 単発制作（PV・採用・プロモ等・1本完結） */
+  projectMode: ProjectMode;
+
   // クライアント基本情報
   clientName: string;
   industry: string;
