@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import {
   getMaxAudioUploadBytes,
-  MAX_BLOB_AUDIO_BYTES,
   WHISPER_MAX_AUDIO_BYTES,
 } from "@/lib/audioUploadLimits";
 import { del } from "@vercel/blob";
@@ -102,14 +101,6 @@ export async function POST(request: NextRequest) {
     }
 
     const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > MAX_BLOB_AUDIO_BYTES) {
-      return NextResponse.json(
-        {
-          error: `ファイルサイズは ${Math.round(MAX_BLOB_AUDIO_BYTES / (1024 * 1024))}MB 以下にしてください`,
-        },
-        { status: 400 }
-      );
-    }
     if (buf.length > WHISPER_MAX_AUDIO_BYTES) {
       return NextResponse.json(
         {

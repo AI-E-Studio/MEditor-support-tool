@@ -1,15 +1,14 @@
 /**
- * Vercel Blob クライアントアップロード経由時の上限（413 回避・トークン発行用）。
- * 直接 FormData で Route Handler に送る場合は使わない。
+ * 文字起こし経路での音声ファイル上限（クライアント・Blob・サーバーで共通）。
+ * OpenAI 側の仕様は変更されうるため、API エラー時は公式ドキュメントを確認。
  */
-export const MAX_BLOB_AUDIO_BYTES = 50 * 1024 * 1024;
+export const WHISPER_MAX_AUDIO_BYTES = 50 * 1024 * 1024;
 
-/** OpenAI Whisper（whisper-1）の音声ファイル上限。これを超えると文字起こしできない。 */
-export const WHISPER_MAX_AUDIO_BYTES = 25 * 1024 * 1024;
-
-export function formatMaxBlobAudioLabel(): string {
-  return `${Math.round(MAX_BLOB_AUDIO_BYTES / (1024 * 1024))}MB`;
-}
+/**
+ * Vercel Blob の 1 ファイル上限（トークン発行用）。
+ * 本アプリでは文字起こし上限と揃える。
+ */
+export const MAX_BLOB_AUDIO_BYTES = WHISPER_MAX_AUDIO_BYTES;
 
 export function formatWhisperMaxAudioLabel(): string {
   return `${Math.round(WHISPER_MAX_AUDIO_BYTES / (1024 * 1024))}MB`;

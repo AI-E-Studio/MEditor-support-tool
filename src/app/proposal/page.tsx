@@ -2,14 +2,13 @@
 
 import { UserMenu } from "@/components/UserMenu";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { upload } from "@vercel/blob/client";
 import {
   formatMaxAudioLabel,
-  formatMaxBlobAudioLabel,
   formatWhisperMaxAudioLabel,
   getMaxAudioUploadBytes,
-  MAX_BLOB_AUDIO_BYTES,
+  WHISPER_MAX_AUDIO_BYTES,
 } from "@/lib/audioUploadLimits";
 import type { HearingData, ProjectMode } from "@/types";
 
@@ -58,6 +57,8 @@ export default function ProposalGeneratorPage() {
   /** 音声ルート: Whisper 後の文字起こし（編集可） */
   const [transcript, setTranscript] = useState("");
   const [loading, setLoading] = useState(false);
+  /** 音声の文字起こし処理中（見出し横のスピナー用。右下ボタンとは分担） */
+  const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState("");
   /** BLOB_READ_WRITE_TOKEN があるとき true（大きい音声は Blob 経由） */
   const [clientBlobUpload, setClientBlobUpload] = useState<boolean | null>(
@@ -109,19 +110,24 @@ export default function ProposalGeneratorPage() {
       }
     }
 
-    const maxBytes = useBlob ? MAX_BLOB_AUDIO_BYTES : getMaxAudioUploadBytes();
-    const maxLabel = useBlob ? formatMaxBlobAudioLabel() : formatMaxAudioLabel();
+    const maxBytes = useBlob
+      ? WHISPER_MAX_AUDIO_BYTES
+      : getMaxAudioUploadBytes();
+    const maxLabel = useBlob
+      ? formatWhisperMaxAudioLabel()
+      : formatMaxAudioLabel();
 
     if (file.size > maxBytes) {
       setError(
         useBlob
-          ? `ファイルが大きすぎます（${maxLabel} 以下にしてください）。`
+          ? `ファイルが大きすぎます。文字起こし（Whisper）は ${maxLabel} までです。録音を分割するか、ビットレートを下げて書き出してください。`
           : `ファイルが大きすぎます（${maxLabel} 以下にしてください）。Vercel 本番ではリクエスト全体が約 4.5MB 上限のため 413 になります。音声を短くする・ビットレートを下げて書き出す・分割するか、Vercel Blob（BLOB_READ_WRITE_TOKEN）を設定するとより大きなファイルを送れます。自ホスト時は NEXT_PUBLIC_MAX_AUDIO_BYTES を調整してください。`
       );
       return;
     }
 
     setLoading(true);
+    setTranscribing(true);
     try {
       let res: Response;
 
@@ -181,6 +187,7 @@ export default function ProposalGeneratorPage() {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
     } finally {
       setLoading(false);
+      setTranscribing(false);
     }
   };
 
@@ -640,7 +647,17 @@ export default function ProposalGeneratorPage() {
               </div>
             </Section>
 
-            <Section title="音声ファイル">
+            <Section
+              title="音声ファイル"
+              titleExtra={
+                transcribing ? (
+                  <span className="inline-flex items-center gap-2 text-sm font-normal text-(--primary) ml-1">
+                    <Spinner />
+                    <span className="text-(--muted)">文字起こし中…</span>
+                  </span>
+                ) : null
+              }
+            >
               <p className="text-sm text-(--muted) mb-3">
                 mp3 / m4a / wav / webm など。日本語は OpenAI Whisper
                 で文字起こしします。
@@ -648,11 +665,10 @@ export default function ProposalGeneratorPage() {
                   <>
                     <strong className="text-(--foreground) font-medium">
                       {" "}
-                      アップロードは 1 ファイルあたり約 {formatMaxBlobAudioLabel()} まで
+                      1 ファイルあたり約 {formatWhisperMaxAudioLabel()} まで
                     </strong>
-                    （Vercel Blob 経由）。
-                    文字起こしは OpenAI Whisper の上限により約{" "}
-                    {formatWhisperMaxAudioLabel()} までです。
+                    （OpenAI Whisper の上限。Vercel Blob
+                    経由のためリクエストサイズの 413 は出にくい）。
                   </>
                 ) : (
                   <>
@@ -716,7 +732,7 @@ export default function ProposalGeneratorPage() {
                 disabled={loading || !transcript.trim()}
                 className="px-8 py-3 bg-(--primary) text-white rounded-lg font-medium hover:bg-(--primary-hover) disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
-                {loading ? (
+                {loading && !transcribing ? (
                   <span className="flex items-center gap-2">
                     <Spinner /> 処理中...
                   </span>
@@ -815,15 +831,18 @@ export default function ProposalGeneratorPage() {
 
 function Section({
   title,
+  titleExtra,
   children,
 }: {
   title: string;
+  titleExtra?: ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="bg-white border border-(--border) rounded-lg p-6">
-      <h2 className="text-lg font-bold mb-4 pb-2 border-b border-(--border)">
-        {title}
+      <h2 className="text-lg font-bold mb-4 pb-2 border-b border-(--border) flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span>{title}</span>
+        {titleExtra}
       </h2>
       <div className="space-y-4">{children}</div>
     </div>
