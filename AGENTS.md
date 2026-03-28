@@ -7,3 +7,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Git
 
 コード変更後はユーザーに言われなくても **`git add` → `commit` → `origin/main` へ `push`** まで行う（`.env*` はコミットしない）。
+
+## ルーティング
+
+- `/` … **動画編集者サポートツール**のハブ（ツール一覧）
+- `/proposal` … **提案書ジェネレーター**（API は `/api/proposal/generate`）。他ツールは同様に `/（ツール名）` と `/api/（ツール名）/` で追加していく想定。

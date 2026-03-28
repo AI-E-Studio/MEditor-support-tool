@@ -5,7 +5,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-(--background) flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md bg-white border border-(--border) rounded-xl p-8 shadow-sm">
         <h1 className="text-xl font-bold text-(--foreground) text-center mb-2">
-          提案書AIジェネレーター
+          動画編集者サポートツール
         </h1>
         <p className="text-sm text-(--muted) text-center mb-8">
           利用するには Google アカウントでログインしてください

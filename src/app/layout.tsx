@@ -9,9 +9,9 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "提案書AIジェネレーター | 動画編集フリーランス向け",
+  title: "動画編集者サポートツール",
   description:
-    "クライアントヒアリングからAI戦略立案、提案書作成まで一気通貫で完結",
+    "動画編集フリーランス向けの支援ツール群。提案書ジェネレーターなど。",
 };
 
 export default function RootLayout({
