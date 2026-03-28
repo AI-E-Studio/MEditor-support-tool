@@ -2,8 +2,13 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { NextResponse } from "next/server";
 
+/** 本番では AUTH_SECRET（または NEXTAUTH_SECRET）が必須。未設定だと /api/auth/* で「Server configuration」エラーになる */
+const authSecret =
+  process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? undefined;
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
+  secret: authSecret,
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID ?? process.env.GOOGLE_CLIENT_ID,
