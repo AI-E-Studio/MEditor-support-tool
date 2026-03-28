@@ -23,13 +23,17 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData();
-  const file = formData.get("file");
+  const raw = formData.get("file");
 
-  if (!file || !(file instanceof File)) {
-    return NextResponse.json({ error: "音声ファイルがありません" }, { status: 400 });
+  // Node / Next の FormData では File ではなく Blob だけ渡ることがあり、instanceof File が false になる
+  if (!raw || typeof raw === "string" || !(raw instanceof Blob)) {
+    return NextResponse.json(
+      { error: "音声ファイルがありません（アップロードデータを認識できませんでした）" },
+      { status: 400 }
+    );
   }
 
-  if (file.size > MAX_BYTES) {
+  if (raw.size > MAX_BYTES) {
     return NextResponse.json(
       { error: "ファイルサイズは 24MB 以下にしてください（Whisper の上限に準拠）" },
       { status: 400 }
@@ -37,9 +41,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const upload = await toFile(buffer, file.name || "audio.webm", {
-      type: file.type || "application/octet-stream",
+    const buffer = Buffer.from(await raw.arrayBuffer());
+    const uploadName =
+      raw instanceof File && raw.name ? raw.name : "audio.webm";
+    const mime =
+      raw instanceof File && raw.type
+        ? raw.type
+        : raw.type || "application/octet-stream";
+
+    const upload = await toFile(buffer, uploadName, {
+      type: mime,
     });
 
     const openai = new OpenAI({ apiKey });
@@ -52,8 +63,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ text: transcription.text });
   } catch (e) {
     console.error("Whisper error:", e);
+    const msg =
+      e instanceof Error ? e.message : "文字起こしに失敗しました";
     return NextResponse.json(
-      { error: "文字起こしに失敗しました。形式・サイズを確認してください。" },
+      {
+        error:
+          "文字起こしに失敗しました。形式・サイズ・OPENAI_API_KEY を確認してください。",
+        detail: msg,
+      },
       { status: 500 }
     );
   }

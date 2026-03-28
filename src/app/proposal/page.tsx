@@ -74,12 +74,27 @@ export default function ProposalGeneratorPage() {
       const res = await fetch("/api/proposal/transcribe", {
         method: "POST",
         body: fd,
+        credentials: "same-origin",
       });
-      const data = await res.json().catch(() => ({}));
+      const rawText = await res.text();
+      let data: { error?: string; detail?: string; text?: string } = {};
+      try {
+        data = JSON.parse(rawText) as typeof data;
+      } catch {
+        if (!res.ok) {
+          throw new Error(
+            `文字起こしに失敗しました（HTTP ${res.status}）。ファイルサイズやサーバー制限を確認してください。`
+          );
+        }
+      }
       if (!res.ok) {
-        throw new Error(
-          typeof data.error === "string" ? data.error : "文字起こしに失敗しました"
-        );
+        const base =
+          typeof data.error === "string"
+            ? data.error
+            : "文字起こしに失敗しました";
+        const detail =
+          typeof data.detail === "string" ? `（${data.detail}）` : "";
+        throw new Error(`${base}${detail}`);
       }
       setTranscript(typeof data.text === "string" ? data.text : "");
     } catch (e) {
