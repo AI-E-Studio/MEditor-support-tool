@@ -16,6 +16,13 @@ const tools: {
       "クライアントヒアリングからAI戦略立案、提案書ドラフト作成までを支援します。",
     available: true,
   },
+  {
+    href: "/video-feedback",
+    title: "動画フィードバック",
+    description:
+      "YouTube・Google Drive・ローカルファイルの動画を再生しながら、タイムスタンプ付きフィードバックをリアルタイム記録。SRTテロップのAI誤字チェックも対応。",
+    available: true,
+  },
 ];
 
 export default function SupportToolHubPage() {
