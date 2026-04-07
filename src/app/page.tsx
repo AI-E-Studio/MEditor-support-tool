@@ -23,6 +23,13 @@ const tools: {
       "YouTube・Google Drive・ローカルファイルの動画を再生しながら、タイムスタンプ付きフィードバックをリアルタイム記録。SRTテロップのAI誤字チェックも対応。",
     available: true,
   },
+  {
+    href: "/youtube-research",
+    title: "YouTube リサーチツール",
+    description:
+      "キーワードやチャンネルでYouTube動画をリサーチ。拡散率ランキング・コメント分析・関連キーワード抽出に対応。",
+    available: true,
+  },
 ];
 
 export default function SupportToolHubPage() {
