@@ -160,12 +160,14 @@ export default function YoutubeResearchPage() {
   commentsRef.current = comments;
   commentsNextPageRef.current = commentsNextPage;
 
-  // APIキーをlocalStorageから復元
+  // APIキーをlocalStorageから復元（未設定なら設定パネルを自動表示）
   useEffect(() => {
     const saved = localStorage.getItem("yt_api_key");
     if (saved) {
       setApiKey(saved);
       setApiKeyInput(saved);
+    } else {
+      setShowSettings(true);
     }
   }, []);
 
