@@ -18,7 +18,7 @@ const tools: {
   },
   {
     href: "/video-feedback",
-    title: "動画フィードバック",
+    title: "（ディレクター向け）動画フィードバックツール",
     description:
       "YouTube・Google Drive・ローカルファイルの動画を再生しながら、タイムスタンプ付きフィードバックをリアルタイム記録。SRTテロップのAI誤字チェックも対応。",
     available: true,

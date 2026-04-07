@@ -319,7 +319,7 @@ export default function VideoFeedbackPage() {
             <span className="text-(--border)">|</span>
             <div>
               <h1 className="text-xl font-bold text-(--foreground)">
-                動画フィードバック
+                （ディレクター向け）動画フィードバックツール
               </h1>
               <p className="text-xs text-(--muted) mt-0.5">
                 動画を再生・一時停止するとタイムスタンプが自動挿入されます
