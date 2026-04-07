@@ -137,7 +137,7 @@ export async function GET(
         const url = `https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=${encodeURIComponent(q)}&hl=ja`;
         const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
         const text = await res.text();
-        const match = text.match(/\((.+)\)/s);
+        const match = text.match(/\(([\s\S]+)\)/);
         if (match) {
           const parsed = JSON.parse(match[1]);
           const suggestions = (parsed[1] as [string][]).map((item) => item[0]);
