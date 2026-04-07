@@ -664,9 +664,13 @@ export default function YoutubeResearchPage() {
               >
                 保存して閉じる
               </button>
-              <p className="text-xs text-(--muted)">
-                未設定の場合はサーバー側の環境変数キーを使用します
-              </p>
+              <Link
+                href="/youtube-research/api-key-guide"
+                className="text-xs text-(--primary) hover:underline shrink-0"
+                target="_blank"
+              >
+                APIキーの取得方法 →
+              </Link>
             </div>
           </div>
         )}
