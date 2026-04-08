@@ -47,6 +47,7 @@ declare global {
 
 interface YTPlayer {
   getCurrentTime(): number;
+  seekTo(seconds: number, allowSeekAhead: boolean): void;
   destroy(): void;
 }
 
@@ -62,6 +63,14 @@ function extractYoutubeId(url: string): string | null {
 function extractDriveId(url: string): string | null {
   const m = url.match(/drive\.google\.com\/file\/d\/([^/?#\s]+)/);
   return m ? m[1] : null;
+}
+
+// "00:01:23,456 --> 00:01:27,000" の開始時刻を秒数に変換
+function srtTimeToSeconds(timeStr: string): number {
+  const start = timeStr.split("-->")[0].trim();
+  const [hms, ms] = start.split(",");
+  const [h, m, s] = hms.split(":").map(Number);
+  return h * 3600 + m * 60 + s + (parseInt(ms || "0") / 1000);
 }
 
 function formatSeconds(sec: number): string {
@@ -286,6 +295,32 @@ export default function VideoFeedbackPage() {
       alert("クリップボードへのコピーに失敗しました。");
     }
   }, [feedbackText]);
+
+  // ── 動画を指定秒数にジャンプ ─────────────────────────────────────────────
+  const seekToTime = useCallback((seconds: number) => {
+    if (videoSource === "youtube" && ytPlayerRef.current) {
+      ytPlayerRef.current.seekTo(seconds, true);
+    } else if (videoSource === "local" && videoRef.current) {
+      videoRef.current.currentTime = seconds;
+      videoRef.current.play().catch(() => {});
+    }
+    // Google Drive はジャンプ不可のためボタン自体を非表示にする
+  }, [videoSource]);
+
+  // ── SRTエラーをフィードバックに追加 ─────────────────────────────────────
+  const addSrtErrorToFeedback = useCallback((err: SrtError) => {
+    const seconds = srtTimeToSeconds(err.time);
+    const stamp = formatSeconds(seconds);
+    const body = err.suggestion
+      ? `テロップ誤字: 「${err.text}」→「${err.suggestion}」（${err.issue}）`
+      : `テロップ: 「${err.text}」${err.issue}`;
+    const line = `${stamp} ${body}`;
+
+    setFeedbackText((prev) => {
+      const prefix = prev.length > 0 && !prev.endsWith("\n") ? "\n" : "";
+      return prev + prefix + line;
+    });
+  }, []);
 
   // ── ファイルインプット起動ヘルパー ──────────────────────────────────────
   const openFileInput = (accept: string, onFile: (f: File) => void) => {
@@ -533,22 +568,43 @@ export default function VideoFeedbackPage() {
                           key={i}
                           className="bg-gray-50 border border-(--border) rounded-lg p-3 text-xs"
                         >
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-mono text-gray-500">
-                              #{err.index}
-                            </span>
-                            <span className="text-red-500 font-medium">
-                              {err.issue}
-                            </span>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-mono text-gray-400">
+                                  #{err.index}
+                                </span>
+                                <span className="font-mono text-purple-600">
+                                  {err.time.split("-->")[0].trim()}
+                                </span>
+                                <span className="text-red-500 font-medium">
+                                  {err.issue}
+                                </span>
+                              </div>
+                              <p className="text-(--foreground)">元: {err.text}</p>
+                              {err.suggestion && (
+                                <p className="text-green-600 mt-0.5">
+                                  → {err.suggestion}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <button
+                                onClick={() => addSrtErrorToFeedback(err)}
+                                className="px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded text-[10px] whitespace-nowrap transition-colors"
+                              >
+                                + FBに追加
+                              </button>
+                              {videoSource && videoSource !== "googledrive" && (
+                                <button
+                                  onClick={() => seekToTime(srtTimeToSeconds(err.time))}
+                                  className="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-[10px] whitespace-nowrap transition-colors"
+                                >
+                                  ▶ ジャンプ
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-(--foreground)">
-                            元: {err.text}
-                          </p>
-                          {err.suggestion && (
-                            <p className="text-green-600 mt-1">
-                              → {err.suggestion}
-                            </p>
-                          )}
                         </li>
                       ))}
                     </ul>
