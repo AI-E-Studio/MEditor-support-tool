@@ -39,6 +39,25 @@ const tools: {
   },
 ];
 
+const plugins: {
+  href: string;
+  title: string;
+  description: string;
+}[] = [
+  {
+    href: "https://drive.google.com/drive/folders/1he0IdYQmbdL1ZXMdsGl9DDvbpFZ9hMnk?usp=drive_link",
+    title: "Premiere 自動カットプラグイン",
+    description:
+      "Premiere Pro で無音部分を自動検出してカット編集を効率化するプラグイン。Google Drive からダウンロードできます。",
+  },
+  {
+    href: "https://drive.google.com/drive/folders/1uEoCuyIU6ixe58HxO86hWyVGIhHxF9Ze?usp=sharing",
+    title: "Premiere テロップ位置ズレ矯正プラグイン",
+    description:
+      "Premiere Pro でテロップ位置のズレを一括で矯正するプラグイン。Google Drive からダウンロードできます。",
+  },
+];
+
 export default function SupportToolHubPage() {
   return (
     <div className="min-h-screen bg-(--background)">
@@ -89,6 +108,32 @@ export default function SupportToolHubPage() {
                   </span>
                 </div>
               )}
+            </li>
+          ))}
+        </ul>
+
+        <h2 className="text-lg font-semibold text-(--foreground) mt-10 mb-4">
+          プラグイン・ダウンロード
+        </h2>
+        <ul className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
+          {plugins.map((plugin) => (
+            <li key={plugin.href}>
+              <a
+                href={plugin.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block h-full rounded-xl border border-(--border) bg-white p-6 shadow-sm hover:border-(--primary) hover:shadow-md transition-all"
+              >
+                <h3 className="font-bold text-(--foreground) mb-2">
+                  {plugin.title}
+                </h3>
+                <p className="text-sm text-(--muted) leading-relaxed">
+                  {plugin.description}
+                </p>
+                <span className="inline-block mt-4 text-sm font-medium text-(--primary)">
+                  Google Drive を開く ↗
+                </span>
+              </a>
             </li>
           ))}
         </ul>
