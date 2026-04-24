@@ -99,11 +99,24 @@ export default function ChatReviewPage() {
           editorHint,
         }),
       });
+      const rawText = await res.text();
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "添削に失敗しました");
+        let apiError = "";
+        try {
+          const parsed = JSON.parse(rawText) as { error?: string };
+          apiError = parsed.error || "";
+        } catch {
+          // JSONでなければ先頭200字をそのまま出す
+          apiError = rawText.slice(0, 200);
+        }
+        throw new Error(
+          `添削に失敗しました (HTTP ${res.status})${apiError ? `\n${apiError}` : ""}`
+        );
       }
-      const payload = (await res.json()) as ApiResponse;
+      const payload = JSON.parse(rawText) as ApiResponse;
+      if (!payload?.result) {
+        throw new Error("AIの応答形式が不正でした");
+      }
       setData(payload);
     } catch (e) {
       setError(e instanceof Error ? e.message : "エラーが発生しました");

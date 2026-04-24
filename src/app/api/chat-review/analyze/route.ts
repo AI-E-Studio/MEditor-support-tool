@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const client = new Anthropic();
 
-const MODEL = "claude-sonnet-4-6";
+// 既存の提案書ツールで稼働実績のあるモデルIDに揃える
+const MODEL = "claude-sonnet-4-20250514";
 
 // ---- 型 ----
 export type IssueCategory =
