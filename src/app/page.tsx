@@ -30,6 +30,13 @@ const tools: {
       "キーワードやチャンネルでYouTube動画をリサーチ。拡散率ランキング・コメント分析・関連キーワード抽出に対応。",
     available: true,
   },
+  {
+    href: "/thumbnail-generator",
+    title: "簡易サムネイル生成ツール",
+    description:
+      "キャッチコピーを入力するだけで、Gemini AI が日本のYouTubeらしいサムネイル画像を自動生成します。",
+    available: true,
+  },
 ];
 
 export default function SupportToolHubPage() {

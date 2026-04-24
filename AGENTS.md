@@ -12,3 +12,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 - `/` … **動画編集者サポートツール**のハブ（ツール一覧）
 - `/proposal` … **提案書ジェネレーター**（API は `/api/proposal/generate`）。他ツールは同様に `/（ツール名）` と `/api/（ツール名）/` で追加していく想定。
+- `/thumbnail-generator` … **簡易サムネイル生成ツール**（API は `/api/thumbnail-generator/generate`、Gemini の画像生成を使用）。
