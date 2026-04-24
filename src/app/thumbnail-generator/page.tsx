@@ -33,7 +33,6 @@ export default function ThumbnailGeneratorPage() {
   const [subText, setSubText] = useState("");
   const [genre, setGenre] = useState<Genre>("auto");
   const [style, setStyle] = useState("");
-  const [variations, setVariations] = useState(1);
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -56,7 +55,6 @@ export default function ThumbnailGeneratorPage() {
           subText: subText.trim(),
           genre,
           style: style.trim(),
-          variations,
         }),
       });
       if (!res.ok) {
@@ -179,31 +177,6 @@ export default function ThumbnailGeneratorPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-(--foreground) mb-1.5">
-                生成枚数
-              </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setVariations(n)}
-                    className={`px-4 py-1.5 rounded-lg text-sm border transition-all ${
-                      variations === n
-                        ? "border-(--primary) bg-(--primary) text-white"
-                        : "border-(--border) bg-white hover:border-(--primary)"
-                    }`}
-                  >
-                    {n}枚
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-(--muted) mt-1">
-                枚数が増えると生成時間がかかります
-              </p>
-            </div>
-
             <button
               type="button"
               onClick={generate}
@@ -258,7 +231,7 @@ export default function ThumbnailGeneratorPage() {
               ))}
             </div>
             <p className="text-xs text-(--muted) mt-4">
-              ※ AI生成のため、日本語テキストが崩れて出力される場合があります。気に入らなければ枚数を増やして再生成するか、画像編集ソフトで文字を差し替えてください。
+              ※ AI生成のため、日本語テキストが崩れて出力される場合があります。気に入らなければ再生成するか、画像編集ソフトで文字を差し替えてください。
             </p>
           </section>
         )}
