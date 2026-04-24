@@ -37,6 +37,13 @@ const tools: {
       "キャッチコピーを入力するだけで、Gemini AI が日本のYouTubeらしいサムネイル画像を自動生成します。",
     available: true,
   },
+  {
+    href: "/chat-review",
+    title: "クライアントチャット添削ツール",
+    description:
+      "クライアントとのチャット履歴を貼り付けるだけで、返信速度・確認漏れ・勝手な判断・線引きなど、自分（編集者）側で改善すべきコミュニケーションのポイントを AI が指摘します。",
+    available: true,
+  },
 ];
 
 const plugins: {
