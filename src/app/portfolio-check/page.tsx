@@ -29,6 +29,13 @@ interface AnalyzeResult {
   actions: ActionItem[];
 }
 
+interface CrawledSubPage {
+  url: string;
+  title: string | null;
+  imageCount: number;
+  videoEmbeds: number;
+}
+
 interface ApiResponse {
   result: AnalyzeResult;
   meta: {
@@ -37,7 +44,10 @@ interface ApiResponse {
     description: string | null;
     imageCount: number;
     videoEmbeds: number;
+    totalImageCount?: number;
+    totalVideoEmbeds?: number;
     snsLinks: string[];
+    crawledSubPages?: CrawledSubPage[];
   };
 }
 
@@ -333,20 +343,67 @@ export default function PortfolioCheckPage() {
             )}
 
             {/* 解析メタ */}
-            <section className="rounded-xl border border-(--border) bg-(--accent) p-4 text-xs text-(--muted)">
-              <div className="font-semibold mb-1 text-(--foreground)">
-                解析した構造シグナル
-              </div>
-              <div className="grid gap-1 sm:grid-cols-2">
-                <div>画像タグ数: {data.meta.imageCount}</div>
-                <div>動画埋め込み数: {data.meta.videoEmbeds}</div>
-                <div className="sm:col-span-2">
-                  検出SNS/外部:{" "}
-                  {data.meta.snsLinks.length
-                    ? data.meta.snsLinks.join(", ")
-                    : "(なし)"}
+            <section className="rounded-xl border border-(--border) bg-(--accent) p-4 text-xs text-(--muted) space-y-3">
+              <div>
+                <div className="font-semibold mb-1 text-(--foreground)">
+                  解析した構造シグナル
+                </div>
+                <div className="grid gap-1 sm:grid-cols-2">
+                  <div>
+                    トップページ 画像タグ数: {data.meta.imageCount}
+                  </div>
+                  <div>
+                    トップページ 動画埋め込み: {data.meta.videoEmbeds}
+                  </div>
+                  {typeof data.meta.totalImageCount === "number" && (
+                    <div>
+                      合計 画像タグ数 (トップ＋下層): {" "}
+                      <span className="font-semibold">
+                        {data.meta.totalImageCount}
+                      </span>
+                    </div>
+                  )}
+                  {typeof data.meta.totalVideoEmbeds === "number" && (
+                    <div>
+                      合計 動画埋め込み (トップ＋下層): {" "}
+                      <span className="font-semibold">
+                        {data.meta.totalVideoEmbeds}
+                      </span>
+                    </div>
+                  )}
+                  <div className="sm:col-span-2">
+                    検出SNS/外部:{" "}
+                    {data.meta.snsLinks.length
+                      ? data.meta.snsLinks.join(", ")
+                      : "(なし)"}
+                  </div>
                 </div>
               </div>
+
+              {data.meta.crawledSubPages && data.meta.crawledSubPages.length > 0 && (
+                <div>
+                  <div className="font-semibold mb-1 text-(--foreground)">
+                    自動クロールした下層ページ ({data.meta.crawledSubPages.length}件)
+                  </div>
+                  <ul className="space-y-1">
+                    {data.meta.crawledSubPages.map((sp, i) => (
+                      <li key={i} className="break-all">
+                        <a
+                          href={sp.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-(--primary) hover:underline"
+                        >
+                          {sp.title || sp.url}
+                        </a>
+                        <span className="ml-2">
+                          画像 {sp.imageCount} / 動画埋込 {sp.videoEmbeds}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
           </>
         )}

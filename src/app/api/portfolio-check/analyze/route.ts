@@ -170,6 +170,157 @@ const SNS_DOMAINS = [
   "threads.net",
 ];
 
+// ---- 下層ページクロール ----
+
+const WORK_PATH_PATTERN =
+  /\/(works?|portfolios?|projects?|cases?|gallery|galleries|showcase|archive|productions?|videos?|movies?|reels?|creations?|作品|実績|事例)(\/|$|\?|#)/i;
+
+const WORK_ANCHOR_KEYWORDS = [
+  "works",
+  "work",
+  "portfolio",
+  "project",
+  "case",
+  "gallery",
+  "showcase",
+  "archive",
+  "production",
+  "video",
+  "movie",
+  "reel",
+  "creation",
+  "作例",
+  "制作実績",
+  "実績",
+  "事例",
+  "作品",
+  "ギャラリー",
+  "動画一覧",
+  "動画",
+  "案件",
+  "view all",
+  "see all",
+  "view more",
+  "もっと見る",
+  "一覧",
+];
+
+interface Anchor {
+  href: string;
+  text: string;
+}
+
+function extractInternalAnchors(html: string, topUrl: string): Anchor[] {
+  const out: Anchor[] = [];
+  const re = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let m: RegExpExecArray | null;
+  let baseHost = "";
+  try {
+    baseHost = new URL(topUrl).hostname;
+  } catch {
+    return out;
+  }
+  while ((m = re.exec(html))) {
+    const href = decodeEntities(m[1]).trim();
+    const text = stripTags(m[2]).slice(0, 100);
+    if (
+      !href ||
+      href.startsWith("#") ||
+      href.startsWith("mailto:") ||
+      href.startsWith("tel:") ||
+      href.startsWith("javascript:")
+    )
+      continue;
+    try {
+      const u = new URL(href, topUrl);
+      if (u.hostname !== baseHost) continue;
+      u.hash = "";
+      out.push({ href: u.toString(), text });
+    } catch {
+      // ignore
+    }
+  }
+  return out;
+}
+
+function selectWorkLinks(
+  anchors: Anchor[],
+  topUrl: string,
+  maxCount = 5
+): string[] {
+  const scored = new Map<string, { score: number }>();
+  for (const a of anchors) {
+    if (a.href === topUrl) continue;
+    let score = 0;
+    try {
+      const u = new URL(a.href);
+      if (WORK_PATH_PATTERN.test(u.pathname)) score += 3;
+      // 数字末尾のパス (作品詳細ページと推定)
+      if (score === 0 && /\/[0-9a-f]{3,}(\/|$)/i.test(u.pathname)) score += 1;
+    } catch {
+      // ignore
+    }
+    const t = a.text.toLowerCase();
+    if (
+      WORK_ANCHOR_KEYWORDS.some((kw) => t.includes(kw.toLowerCase()))
+    )
+      score += 2;
+    if (score > 0) {
+      const prev = scored.get(a.href);
+      if (!prev || prev.score < score) scored.set(a.href, { score });
+    }
+  }
+  return Array.from(scored.entries())
+    .sort((a, b) => b[1].score - a[1].score)
+    .slice(0, maxCount)
+    .map(([href]) => href);
+}
+
+interface SubPageSummary {
+  url: string;
+  title: string | null;
+  imageCount: number;
+  videoEmbeds: string[];
+  iframeHosts: string[];
+  textExcerpt: string;
+  headings: string[];
+}
+
+async function fetchSubPage(
+  url: string,
+  timeoutMs = 10_000
+): Promise<SubPageSummary | null> {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: BROWSER_HEADERS,
+    });
+    if (!res.ok) return null;
+    const ct = res.headers.get("content-type") ?? "";
+    if (!/text\/html|application\/xhtml/i.test(ct)) return null;
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > MAX_HTML_BYTES) return null;
+    const html = new TextDecoder("utf-8", { fatal: false }).decode(buf);
+    const s = summarizePage(html, res.url);
+    return {
+      url: s.url,
+      title: s.title,
+      imageCount: s.imageCount,
+      videoEmbeds: s.videoEmbeds,
+      iframeHosts: s.iframeHosts,
+      textExcerpt: s.text.slice(0, 800),
+      headings: s.headings.slice(0, 15),
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 function summarizePage(html: string, url: string): PageSummary {
   const title = firstMatch(html, /<title[^>]*>([\s\S]*?)<\/title>/i);
   const description = firstMatch(
@@ -322,23 +473,47 @@ const SYSTEM_PROMPT = `あなたは動画編集フリーランス向けのポー
 - JavaScript でレンダリングされる SPA の場合、本文テキストが取得できていないことがある。その場合は overallSummary で「SPA のため本文解析不可・可能な範囲での評価」と明示し、スコアは低めに保守的に付ける。
 - 情報が不足しているときに憶測で高得点を付けない。`;
 
-function buildUserMessage(page: PageSummary): string {
+function buildUserMessage(
+  page: PageSummary,
+  subPages: SubPageSummary[]
+): string {
+  const totalVideoEmbeds =
+    page.videoEmbeds.length +
+    subPages.reduce((s, p) => s + p.videoEmbeds.length, 0);
+  const totalImages =
+    page.imageCount + subPages.reduce((s, p) => s + p.imageCount, 0);
+
+  const subBlock = subPages.length
+    ? `\n## 下層ページ (作例系と推定してクロール、${subPages.length}ページ)\n` +
+      subPages
+        .map(
+          (sp, i) => `### 下層 ${i + 1}: ${sp.url}
+- title: ${sp.title ?? "(なし)"}
+- 画像タグ数: ${sp.imageCount}
+- 動画埋め込み (YouTube/Vimeo): ${sp.videoEmbeds.length}
+${sp.videoEmbeds.slice(0, 5).map((v) => `  - ${v}`).join("\n")}
+- 主な見出し: ${sp.headings.slice(0, 5).join(" / ") || "(なし)"}
+- 本文抜粋: ${sp.textExcerpt.slice(0, 400)}`
+        )
+        .join("\n\n")
+    : "\n## 下層ページ\n(作例系の内部リンクが見つからなかったか、クロールに失敗しました)";
+
   return `以下のポートフォリオサイトを解析してください。
 
-## URL
+## URL (トップページ)
 ${page.url}
 
-## ページ基本情報
+## トップページ基本情報
 - title: ${page.title ?? "(なし)"}
 - meta description: ${page.description ?? "(なし)"}
 - og:title: ${page.ogTitle ?? "(なし)"}
 - og:description: ${page.ogDescription ?? "(なし)"}
 
-## 構造シグナル
+## トップページの構造シグナル
 - 画像タグ数 (<img>): ${page.imageCount}
 - iframe 埋め込み数: ${page.iframeHosts.length}
 - 動画埋め込み (YouTube/Vimeo): ${page.videoEmbeds.length}
-  ${page.videoEmbeds.slice(0, 10).map((v) => `  - ${v}`).join("\n")}
+${page.videoEmbeds.slice(0, 10).map((v) => `  - ${v}`).join("\n")}
 - 内部リンク数: ${page.links.internal}
 - 外部リンク数: ${page.links.external}
 - 検出されたSNS/外部プラットフォーム:
@@ -347,10 +522,16 @@ ${page.links.snsLinks.length ? page.links.snsLinks.map((s) => `  - ${s}`).join("
 ## 見出し (h1/h2/h3)
 ${page.headings.length ? page.headings.map((h) => `- ${h}`).join("\n") : "(取得できず)"}
 
-## 本文テキスト (先頭${TEXT_CAP}文字まで)
+## トップページ本文テキスト (先頭${TEXT_CAP}文字まで)
 ${"```"}
 ${page.text}
 ${"```"}
+${subBlock}
+
+## 合計シグナル (トップ + 下層)
+- 累計 動画埋め込み(YouTube/Vimeo): ${totalVideoEmbeds}
+- 累計 画像タグ数: ${totalImages}
+- 作例の充実度は、**トップだけでなく下層ページの動画数も合算して評価**してください。
 
 JSONで出力してください。`;
 }
@@ -419,8 +600,10 @@ export async function POST(request: NextRequest) {
     }
 
     let page: PageSummary;
+    let topHtml: string;
     try {
       const fetched = await fetchHtml(parsed.toString());
+      topHtml = fetched.html;
       page = summarizePage(fetched.html, fetched.finalUrl);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "取得エラー";
@@ -430,6 +613,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 下層ページ (作例系) を自動検出してクロール
+    const anchors = extractInternalAnchors(topHtml, page.url);
+    const workUrls = selectWorkLinks(anchors, page.url, 5);
+    const subPagesRaw = await Promise.all(
+      workUrls.map((u) => fetchSubPage(u, 10_000))
+    );
+    const subPages = subPagesRaw.filter(
+      (p): p is SubPageSummary => p !== null
+    );
+
     const message = await client.messages.create({
       model: MODEL,
       max_tokens: 4096,
@@ -437,7 +630,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "user",
-          content: buildUserMessage(page),
+          content: buildUserMessage(page, subPages),
         },
       ],
     });
@@ -462,6 +655,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const totalVideoEmbeds =
+      page.videoEmbeds.length +
+      subPages.reduce((s, p) => s + p.videoEmbeds.length, 0);
+    const totalImages =
+      page.imageCount + subPages.reduce((s, p) => s + p.imageCount, 0);
+
     return NextResponse.json({
       result,
       meta: {
@@ -470,7 +669,15 @@ export async function POST(request: NextRequest) {
         description: page.description,
         imageCount: page.imageCount,
         videoEmbeds: page.videoEmbeds.length,
+        totalImageCount: totalImages,
+        totalVideoEmbeds,
         snsLinks: page.links.snsLinks,
+        crawledSubPages: subPages.map((p) => ({
+          url: p.url,
+          title: p.title,
+          imageCount: p.imageCount,
+          videoEmbeds: p.videoEmbeds.length,
+        })),
       },
     });
   } catch (error) {
