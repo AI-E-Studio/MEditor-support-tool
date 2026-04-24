@@ -143,8 +143,11 @@ export default function PortfolioCheckPage() {
             >
               ← ツール一覧に戻る
             </Link>
-            <h1 className="text-xl font-bold text-(--foreground) mt-1">
+            <h1 className="text-xl font-bold text-(--foreground) mt-1 flex items-center gap-2 flex-wrap">
               ポートフォリオ魅力度チェックツール
+              <span className="text-xs font-bold bg-orange-500 text-white px-2 py-0.5 rounded">
+                β版
+              </span>
             </h1>
             <p className="text-sm text-(--muted) mt-0.5">
               URLを入力するだけで、動画編集者のポートフォリオを4観点100点満点で採点します
@@ -155,6 +158,25 @@ export default function PortfolioCheckPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        {/* β版 重要注意バナー */}
+        <section className="rounded-xl border-2 border-orange-400 bg-orange-50 p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl leading-none">⚠️</div>
+            <div>
+              <h2 className="text-base font-bold text-orange-900 mb-1">
+                このツールは β 版です
+              </h2>
+              <p className="text-sm text-orange-900 leading-relaxed">
+                サイトの作りによっては、
+                <strong>ページ内に掲載されている動画作例の数を正しく読み取れない場合があります。</strong>
+                （例：動画を「クリックすると開く」仕組みのサイト、表示に時間差があるサイト、ページの下のほうで読み込まれるタイプのサイト など）
+                <br />
+                AIの採点結果はあくまで参考としてご覧いただき、実際のサイトの充実度と照らし合わせてご活用ください。
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* 説明 */}
         <section className="rounded-xl border border-(--border) bg-white p-6 shadow-sm space-y-3">
           <h2 className="text-base font-bold text-(--foreground)">
@@ -162,17 +184,11 @@ export default function PortfolioCheckPage() {
           </h2>
           <p className="text-sm text-(--foreground) leading-relaxed">
             動画編集者のポートフォリオサイトURL（STUDIO / Wix / Notion公開ページ / 自作サイト 等）を入力すると、
-            Claude AI が HTML 構造とテキストを解析し、
+            Claude AI が
             <strong>作例の見せ方・プロフィールの信頼性・料金/納期/対応範囲の明記・問い合わせ導線</strong>
-            の4つの観点で採点（各25点・合計100点）、優先度付きの改善アクションを返します。
+            の4つの観点で採点（各25点・合計100点）し、優先度付きの改善アクションを返します。
+            トップページに加え、「作品」「実績」などの下層ページも自動で巡回して、サイト全体で判断します。
           </p>
-          <div className="text-xs text-(--muted) leading-relaxed border-t border-(--border) pt-3">
-            ※ スクリーンショットは取得せず、HTMLのテキスト/構造のみで診断します。
-            <br />
-            ※ JavaScript でコンテンツを描画する SPA
-            (React/Vueで実装されていて初期HTMLが空っぽのもの) は本文が読めない場合があります。
-            その場合はスコアが低めに出やすい点にご留意ください。
-          </div>
         </section>
 
         {/* 入力 */}
