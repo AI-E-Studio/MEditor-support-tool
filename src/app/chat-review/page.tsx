@@ -137,7 +137,7 @@ export default function ChatReviewPage() {
               ← ツール一覧に戻る
             </Link>
             <h1 className="text-xl font-bold text-(--foreground) mt-1">
-              クライアントチャット添削ツール
+              クライアントワーク添削ツール
             </h1>
             <p className="text-sm text-(--muted) mt-0.5">
               クライアントとのやり取りを貼り付けると、自分側で直すべきポイントをAIが指摘します
