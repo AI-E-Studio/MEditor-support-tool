@@ -12,38 +12,27 @@ import {
 } from "@/lib/audioUploadLimits";
 import type { HearingData, ProjectMode } from "@/types";
 
-/** テスト用: 架空クライアントの一貫したサンプルヒアリング（単発制作型） */
+/** ヒアリングフォームの初期値（空欄スタート。各フィールドの placeholder が見えるように） */
 const initialHearing: HearingData = {
   projectMode: "single_production",
-  clientName: "株式会社グリーンリーフ（架空・オーガニック食品）",
-  industry: "食品小売・EC（健康志向・オーガニック専門）",
-  businessOverview:
-    "首都圏を中心に実店舗5店舗と自社ECを運営。国産・無添加にこだわった野菜セットと加工食品を展開。2024年より法人向け定期便を開始し、福利厚生・オフィス向け需要を開拓中。従業員約80名、年商約18億円。",
-  videoType: "企業ブランディング動画（サービス紹介）＋商品訴求を兼ねたショート動画",
-  videoPurpose:
-    "認知拡大に加え、ECの新規会員登録と法人問い合わせ件数の増加。ブランドの信頼感（安全・透明性・サステナビリティ）を映像で伝え、競合ECとの差別化を図りたい。",
-  targetAudience:
-    "30〜50代の共働き世帯、健康意識が高い層。法人では人事・総務担当者（福利厚生ニーズ）。地域は関東・関西の都市部が中心。",
-  publishPlatform:
-    "YouTube（60秒・15秒版）、Instagramリール、自社サイトトップ、展示会ブース用モニター",
-  budget: "動画制作全体で25万円〜35万円（撮影は一部既存素材活用可）",
-  deadline: "初稿納品は契約から3週間以内。修正1〜2回込みで最終は5週間目まで",
-  videoLength: "メイン90秒（サイト用）＋カットダウン30秒・15秒（SNS用）",
-  quantity: "今回はメイン1本＋派生カット2本の計3バージョン希望",
-  existingMaterials:
-    "農園での取材写真（JPEG多数）、ロゴデータ（AI形式）、ブランドカラー定義（#2d5a3d / #f5f0e8）、昨年のイベント動画（編集前の長尺素材あり）",
-  referenceVideos:
-    "パナソニックのサステナビリティ紹介動画のテンポ感。あと、無印良品の商品紹介の落ち着いたナレーション調がイメージに近い。",
-  toneAndManner:
-    "自然体で誠実、高すぎない親しみ。派手なエフェクトより、素材の質感と人の表情を生かしたトーン。ナレーションは落ち着いた女性声または穏やかな男性声希望。",
-  specialRequests:
-    "英語字幕なし（国内向け）。冒頭5秒でブランドロゴとキャッチコピーを入れたい。BGMはアコースティック系、歌詞なし。商品パッケージのクローズアップを3カット以上。最後にCTAで公式サイトURLとQRコード表示。",
-  currentChallenges:
-    "SNSは投稿しているが動画の完成度にばらつきがあり、広告として使える一本がない。法人向け資料はあるが、映像で説明できる資料が弱く商談で刺さりにくい。",
-  competitorInfo:
-    "大手オーガニックECは予算が大きくテレビCMレベルの動画を流している。中堅では「○○マーケット」がInstagramでショートを高頻度投稿しており、フォロワー数で先行している。",
-  kpi:
-    "公開後3ヶ月でメイン動画の再生10万回以上、サイト経由の新規会員月200件、法人お問い合わせ月15件以上（前年比120%）。",
+  clientName: "",
+  industry: "",
+  businessOverview: "",
+  videoType: "",
+  videoPurpose: "",
+  targetAudience: "",
+  publishPlatform: "",
+  budget: "",
+  deadline: "",
+  videoLength: "",
+  quantity: "",
+  existingMaterials: "",
+  referenceVideos: "",
+  toneAndManner: "",
+  specialRequests: "",
+  currentChallenges: "",
+  competitorInfo: "",
+  kpi: "",
 };
 
 type EntryMode = "choose" | "manual" | "audio";
