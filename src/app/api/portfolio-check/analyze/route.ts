@@ -35,7 +35,23 @@ export interface AnalyzeResult {
 
 const MAX_HTML_BYTES = 2_000_000; // 2MB
 const TEXT_CAP = 12_000;
-const FETCH_TIMEOUT_MS = 15_000;
+const FETCH_TIMEOUT_MS = 25_000;
+
+// サーバー判定回避のため、最新Chromeに寄せたUA/ヘッダ
+const BROWSER_HEADERS: Record<string, string> = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+  "Accept-Encoding": "gzip, deflate, br",
+  "Cache-Control": "no-cache",
+  Pragma: "no-cache",
+  "Sec-Fetch-Dest": "document",
+  "Sec-Fetch-Mode": "navigate",
+  "Sec-Fetch-Site": "none",
+  "Upgrade-Insecure-Requests": "1",
+};
 
 async function fetchHtml(
   url: string
@@ -46,12 +62,7 @@ async function fetchHtml(
     const res = await fetch(url, {
       signal: controller.signal,
       redirect: "follow",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; MEditor-Support-Tool/1.0; Portfolio Check)",
-        Accept: "text/html,application/xhtml+xml,*/*;q=0.9",
-        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-      },
+      headers: BROWSER_HEADERS,
     });
     if (!res.ok) {
       throw new Error(`URLの取得に失敗しました (HTTP ${res.status})`);
@@ -68,6 +79,13 @@ async function fetchHtml(
     }
     const html = new TextDecoder("utf-8", { fatal: false }).decode(buf);
     return { html, finalUrl: res.url, contentType };
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error(
+        `URL取得がタイムアウトしました (${FETCH_TIMEOUT_MS / 1000}秒)。サイトの応答が遅いか、ボット判定で応答が返らなかった可能性があります。`
+      );
+    }
+    throw e;
   } finally {
     clearTimeout(t);
   }
