@@ -131,7 +131,7 @@ export default function SupportToolHubPage() {
                   {plugin.description}
                 </p>
                 <span className="inline-block mt-4 text-sm font-medium text-(--primary)">
-                  Google Drive を開く ↗
+                  ダウンロード ↗
                 </span>
               </a>
             </li>
