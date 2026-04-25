@@ -53,23 +53,18 @@ const notes = [
 
 export default function ApiKeyGuidePage() {
   return (
-    <div className="min-h-screen bg-(--background)">
-      <header className="bg-white border-b border-(--border) sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Link
-            href="/youtube-research"
-            className="text-sm text-(--muted) hover:text-(--foreground) transition-colors"
-          >
-            ← リサーチツールに戻る
-          </Link>
-          <span className="text-(--border)">|</span>
-          <h1 className="text-lg font-bold text-(--foreground)">
-            YouTube APIキーの取得方法
-          </h1>
-        </div>
-      </header>
-
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-2xl mx-auto space-y-8">
+      <div>
+        <Link
+          href="/youtube-research"
+          className="text-sm text-slate-500 hover:text-[#2651A6] transition-colors"
+        >
+          ← リサーチツールに戻る
+        </Link>
+        <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight mt-2">
+          YouTube APIキーの取得方法
+        </h1>
+      </div>
         {/* 手順 */}
         <section>
           <ol className="space-y-5">
@@ -110,12 +105,11 @@ export default function ApiKeyGuidePage() {
         <div className="text-center pt-2">
           <Link
             href="/youtube-research"
-            className="inline-block px-6 py-2.5 bg-(--primary) text-white text-sm rounded-lg hover:opacity-90 transition-opacity"
+            className="inline-block px-6 py-2.5 bg-[#2651A6] text-white text-sm font-semibold rounded-lg hover:bg-[#1E3F80] active:bg-[#163066] transition-colors"
           >
             リサーチツールに戻る
           </Link>
         </div>
-      </main>
     </div>
   );
 }

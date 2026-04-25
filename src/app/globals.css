@@ -2,9 +2,11 @@
 
 :root {
   --background: #f8fafc;
-  --foreground: #1e293b;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
+  --foreground: #0f172a;
+  --primary: #2651a6;
+  --primary-hover: #1e3f80;
+  --primary-soft: #eaf0f9;
+  --accent-strong: #52b5f2;
   --card-bg: #ffffff;
   --border: #e2e8f0;
   --muted: #64748b;
@@ -17,6 +19,8 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-accent-strong: var(--accent-strong);
   --color-card-bg: var(--card-bg);
   --color-border: var(--border);
   --color-muted: var(--muted);

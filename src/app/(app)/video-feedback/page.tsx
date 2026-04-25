@@ -1,7 +1,5 @@
 "use client";
 
-import { UserMenu } from "@/components/UserMenu";
-import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -340,32 +338,17 @@ export default function VideoFeedbackPage() {
 
   // ─── レンダー ──────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-(--background)">
-      {/* ヘッダー */}
-      <header className="bg-white border-b border-(--border) sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-sm text-(--muted) hover:text-(--foreground) transition-colors"
-            >
-              ← ツール一覧
-            </Link>
-            <span className="text-(--border)">|</span>
-            <div>
-              <h1 className="text-xl font-bold text-(--foreground)">
-                （ディレクター向け）動画フィードバックツール
-              </h1>
-              <p className="text-xs text-(--muted) mt-0.5">
-                動画を再生・一時停止するとタイムスタンプが自動挿入されます
-              </p>
-            </div>
-          </div>
-          <UserMenu />
-        </div>
-      </header>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
+          （ディレクター向け）動画フィードバックツール
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          動画を再生・一時停止するとタイムスタンプが自動挿入されます
+        </p>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* ── 左カラム: 動画 + SRT ────────────────────────────────────── */}
         <div className="space-y-4">
           {/* 動画読み込みエリア */}
@@ -675,7 +658,7 @@ export default function VideoFeedbackPage() {
             </div>
           </section>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

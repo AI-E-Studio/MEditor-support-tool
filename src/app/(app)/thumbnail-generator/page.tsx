@@ -1,7 +1,5 @@
 "use client";
 
-import { UserMenu } from "@/components/UserMenu";
-import Link from "next/link";
 import { useState } from "react";
 
 interface GeneratedImage {
@@ -84,28 +82,15 @@ export default function ThumbnailGeneratorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-(--background)">
-      <header className="bg-white border-b border-(--border) sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div>
-            <Link
-              href="/"
-              className="text-sm text-(--muted) hover:text-(--primary)"
-            >
-              ← ツール一覧に戻る
-            </Link>
-            <h1 className="text-xl font-bold text-(--foreground) mt-1">
-              簡易サムネイル生成ツール
-            </h1>
-            <p className="text-sm text-(--muted) mt-0.5">
-              キャッチコピーから日本のYouTube風サムネイルをAIで生成します
-            </p>
-          </div>
-          <UserMenu />
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
+          簡易サムネイル生成ツール
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          キャッチコピーから日本のYouTube風サムネイルをAIで生成します
+        </p>
+      </div>
         <section className="rounded-xl border border-(--border) bg-white p-6 shadow-sm">
           <div className="space-y-5">
             <div>
@@ -235,7 +220,6 @@ export default function ThumbnailGeneratorPage() {
             </p>
           </section>
         )}
-      </main>
     </div>
   );
 }

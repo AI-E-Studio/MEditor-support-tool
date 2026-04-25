@@ -1,7 +1,5 @@
 "use client";
 
-import { UserMenu } from "@/components/UserMenu";
-import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { upload } from "@vercel/blob/client";
 import {
@@ -295,35 +293,17 @@ export default function ProposalGeneratorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-(--background)">
-      {/* Header */}
-      <header className="bg-white border-b border-(--border) sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs text-(--muted) mb-0.5">
-              <Link
-                href="/"
-                className="hover:text-(--primary) transition-colors"
-              >
-                動画編集者サポートツール
-              </Link>
-              <span className="mx-1.5 opacity-50">/</span>
-              <span>提案書ジェネレーター</span>
-            </p>
-            <h1 className="text-xl font-bold text-(--foreground) truncate">
-              提案書AIジェネレーター
-            </h1>
-          </div>
-          <div className="flex items-center gap-4 shrink-0">
-            <span className="text-sm text-(--muted) hidden sm:inline">
-              Vi-Net動画編集者の総合サポートツール
-            </span>
-            <UserMenu />
-          </div>
-        </div>
-      </header>
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
+          提案書AIジェネレーター
+        </h1>
+        <p className="text-sm text-slate-500 mt-1">
+          ヒアリング → 戦略立案 → 提案書ドラフトまで AI が支援します
+        </p>
+      </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div>
         {entryMode === "choose" && (
           <div className="space-y-6 mb-8">
             <h2 className="text-lg font-semibold text-(--foreground) text-center">

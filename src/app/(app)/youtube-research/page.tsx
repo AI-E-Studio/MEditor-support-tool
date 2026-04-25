@@ -1,6 +1,5 @@
 "use client";
 
-import { UserMenu } from "@/components/UserMenu";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -600,83 +599,73 @@ export default function YoutubeResearchPage() {
 
   // ── レンダー ──────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-(--background)">
-      {/* ヘッダー */}
-      <header className="bg-white border-b border-(--border) sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-sm text-(--muted) hover:text-(--foreground) transition-colors"
-            >
-              ← ツール一覧
-            </Link>
-            <span className="text-(--border)">|</span>
-            <h1 className="text-xl font-bold text-(--foreground)">
-              YouTube リサーチツール
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowSettings((v) => !v)}
-              className="text-sm text-(--muted) hover:text-(--foreground) transition-colors"
-            >
-              ⚙ APIキー設定
-            </button>
-            <UserMenu />
-          </div>
+    <div>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
+            YouTube リサーチツール
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            キーワードやチャンネルでYouTube動画をリサーチ・分析
+          </p>
         </div>
+        <button
+          onClick={() => setShowSettings((v) => !v)}
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 transition-colors"
+        >
+          ⚙ APIキー設定
+        </button>
+      </div>
 
-        {/* 設定パネル */}
-        {showSettings && (
-          <div className="border-t border-(--border) bg-gray-50 px-4 py-3">
-            <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-3">
-              <label className="text-sm text-(--foreground) shrink-0">
-                YouTube Data API キー
-              </label>
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const k = apiKeyInput.trim();
-                    if (k) {
-                      setApiKey(k);
-                      localStorage.setItem("yt_api_key", k);
-                    }
-                    setShowSettings(false);
-                  }
-                }}
-                placeholder="AIza..."
-                className="flex-1 min-w-0 max-w-sm border border-(--border) rounded px-3 py-1.5 text-sm focus:outline-none focus:border-(--primary)"
-              />
-              <button
-                onClick={() => {
+      {/* 設定パネル */}
+      {showSettings && (
+        <div className="mb-4 rounded-xl border border-slate-200 bg-white shadow-sm px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-sm font-medium text-[#0F172A] shrink-0">
+              YouTube Data API キー
+            </label>
+            <input
+              type="password"
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
                   const k = apiKeyInput.trim();
                   if (k) {
                     setApiKey(k);
                     localStorage.setItem("yt_api_key", k);
                   }
                   setShowSettings(false);
-                }}
-                className="px-3 py-1.5 bg-(--primary) text-white text-sm rounded hover:opacity-90 transition-opacity"
-              >
-                保存して閉じる
-              </button>
-              <Link
-                href="/youtube-research/api-key-guide"
-                className="text-xs text-(--primary) hover:underline shrink-0"
-                target="_blank"
-              >
-                APIキーの取得方法 →
-              </Link>
-            </div>
+                }
+              }}
+              placeholder="AIza..."
+              className="flex-1 min-w-0 max-w-sm border border-slate-200 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-[#2651A6] focus:ring-2 focus:ring-[#52B5F2]/30"
+            />
+            <button
+              onClick={() => {
+                const k = apiKeyInput.trim();
+                if (k) {
+                  setApiKey(k);
+                  localStorage.setItem("yt_api_key", k);
+                }
+                setShowSettings(false);
+              }}
+              className="h-8 px-3 bg-[#2651A6] text-white text-sm font-semibold rounded-md hover:bg-[#1E3F80] active:bg-[#163066] transition-colors"
+            >
+              保存して閉じる
+            </button>
+            <Link
+              href="/youtube-research/api-key-guide"
+              className="text-xs text-[#2651A6] hover:underline shrink-0"
+              target="_blank"
+            >
+              APIキーの取得方法 →
+            </Link>
           </div>
-        )}
-      </header>
+        </div>
+      )}
 
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-4">
+      <div className="space-y-4">
         {/* 検索エリア */}
         <div className="bg-white border border-(--border) rounded-xl p-4 shadow-sm">
           <div className="flex gap-2 mb-4">
@@ -1025,7 +1014,7 @@ export default function YoutubeResearchPage() {
             )}
           </>
         )}
-      </main>
+      </div>
 
       {/* 動画詳細モーダル */}
       {modalVideo && (
