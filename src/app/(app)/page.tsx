@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  ToolThumbnail,
+  type ToolThumbnailKind,
+} from "@/components/app/ToolThumbnail";
 
 type Category = "sales" | "client" | "production";
 
@@ -35,6 +39,7 @@ const tools: {
   available: boolean;
   category: Category;
   badge?: string;
+  thumb: ToolThumbnailKind;
 }[] = [
   {
     category: "sales",
@@ -43,6 +48,7 @@ const tools: {
     description:
       "クライアントヒアリングからAI戦略立案、提案書ドラフト作成までを支援します。",
     available: true,
+    thumb: "proposal",
   },
   {
     category: "sales",
@@ -52,6 +58,7 @@ const tools: {
       "ポートフォリオサイトのURLを入力するだけで、作例の見せ方・プロフィール・料金/納期の明記・問い合わせ導線の4観点をAIが100点満点で採点します。",
     available: true,
     badge: "β版",
+    thumb: "portfolio",
   },
   {
     category: "client",
@@ -60,6 +67,7 @@ const tools: {
     description:
       "そのまま送ると冷たく届きそうな文面を、相手にちゃんと感情・温度感が伝わる EQ 高めの文章にAIがリライトします。感謝先出し・相手主語化・選択権を渡す等の設計法則を自動適用。",
     available: true,
+    thumb: "eq-rewrite",
   },
   {
     category: "client",
@@ -68,6 +76,7 @@ const tools: {
     description:
       "クライアントとのチャット履歴を貼り付けるだけで、返信速度・確認漏れ・勝手な判断・線引きなど、自分側で改善すべきコミュニケーションのポイントをAIが指摘します。",
     available: true,
+    thumb: "chat-review",
   },
   {
     category: "client",
@@ -76,6 +85,7 @@ const tools: {
     description:
       "YouTube・Google Drive・ローカルファイルの動画を再生しながら、タイムスタンプ付きフィードバックをリアルタイム記録。SRTテロップのAI誤字チェックも対応。",
     available: true,
+    thumb: "video-feedback",
   },
   {
     category: "production",
@@ -84,6 +94,7 @@ const tools: {
     description:
       "キーワードやチャンネルでYouTube動画をリサーチ。拡散率ランキング・コメント分析・関連キーワード抽出に対応。",
     available: true,
+    thumb: "youtube",
   },
   {
     category: "production",
@@ -92,6 +103,7 @@ const tools: {
     description:
       "キャッチコピーを入力するだけで、Gemini AI が日本のYouTubeらしいサムネイル画像を自動生成します。",
     available: true,
+    thumb: "thumbnail-gen",
   },
 ];
 
@@ -99,18 +111,21 @@ const plugins: {
   href: string;
   title: string;
   description: string;
+  thumb: ToolThumbnailKind;
 }[] = [
   {
     href: "https://drive.google.com/drive/folders/1he0IdYQmbdL1ZXMdsGl9DDvbpFZ9hMnk?usp=drive_link",
     title: "Premiere 自動カットプラグイン",
     description:
       "Premiere Pro で無音部分を自動検出してカット編集を効率化するプラグイン。",
+    thumb: "plugin-cut",
   },
   {
     href: "https://drive.google.com/drive/folders/1uEoCuyIU6ixe58HxO86hWyVGIhHxF9Ze?usp=sharing",
     title: "Premiere テロップ位置ズレ矯正プラグイン",
     description:
       "Premiere Pro でテロップ位置のズレを一括で矯正するプラグイン。",
+    thumb: "plugin-text",
   },
 ];
 
@@ -154,9 +169,9 @@ export default function SupportToolHubPage() {
                     {tool.available ? (
                       <Link
                         href={tool.href}
-                        className="group block h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#2651A6] hover:shadow-md transition-all"
+                        className="group flex flex-col h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#2651A6] hover:shadow-md transition-all"
                       >
-                        <div className="flex items-start gap-2 flex-wrap mb-2">
+                        <div className="flex items-start gap-2 flex-wrap mb-3">
                           <h3 className="font-bold text-[#0F172A] flex-1 min-w-0">
                             {tool.title}
                           </h3>
@@ -166,22 +181,34 @@ export default function SupportToolHubPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600 leading-relaxed">
-                          {tool.description}
-                        </p>
+                        <div className="flex items-start gap-4 flex-1">
+                          <ToolThumbnail
+                            kind={tool.thumb}
+                            className="w-24 h-24 sm:w-28 sm:h-28"
+                          />
+                          <p className="text-sm text-slate-600 leading-relaxed flex-1 min-w-0">
+                            {tool.description}
+                          </p>
+                        </div>
                         <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2651A6] group-hover:gap-2 transition-all">
                           開く
                           <span aria-hidden="true">→</span>
                         </div>
                       </Link>
                     ) : (
-                      <div className="block h-full rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 opacity-80">
-                        <h3 className="font-bold text-[#0F172A] mb-2">
+                      <div className="flex flex-col h-full rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 opacity-80">
+                        <h3 className="font-bold text-[#0F172A] mb-3">
                           {tool.title}
                         </h3>
-                        <p className="text-sm text-slate-600">
-                          {tool.description}
-                        </p>
+                        <div className="flex items-start gap-4 flex-1">
+                          <ToolThumbnail
+                            kind={tool.thumb}
+                            className="w-24 h-24 sm:w-28 sm:h-28 grayscale opacity-70"
+                          />
+                          <p className="text-sm text-slate-600 flex-1 min-w-0">
+                            {tool.description}
+                          </p>
+                        </div>
                         <span className="inline-block mt-4 text-xs text-slate-500 font-medium">
                           準備中
                         </span>
@@ -218,14 +245,20 @@ export default function SupportToolHubPage() {
                   href={plugin.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group block h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#2651A6] hover:shadow-md transition-all"
+                  className="group flex flex-col h-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#2651A6] hover:shadow-md transition-all"
                 >
-                  <h3 className="font-bold text-[#0F172A] mb-2">
+                  <h3 className="font-bold text-[#0F172A] mb-3">
                     {plugin.title}
                   </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    {plugin.description}
-                  </p>
+                  <div className="flex items-start gap-4 flex-1">
+                    <ToolThumbnail
+                      kind={plugin.thumb}
+                      className="w-24 h-24 sm:w-28 sm:h-28"
+                    />
+                    <p className="text-sm text-slate-600 leading-relaxed flex-1 min-w-0">
+                      {plugin.description}
+                    </p>
+                  </div>
                   <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#2651A6] group-hover:gap-2 transition-all">
                     ダウンロード
                     <span aria-hidden="true">↗</span>
