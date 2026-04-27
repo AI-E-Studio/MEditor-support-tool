@@ -12,6 +12,10 @@ const TITLE_MAP: Array<{ match: (p: string) => boolean; label: string }> = [
     label: "ポートフォリオ魅力度チェック（β版）",
   },
   {
+    match: (p) => p.startsWith("/eq-rewrite"),
+    label: "クライアントメッセージ EQ リライト",
+  },
+  {
     match: (p) => p.startsWith("/chat-review"),
     label: "クライアントワーク添削",
   },

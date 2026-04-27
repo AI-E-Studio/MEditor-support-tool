@@ -55,6 +55,14 @@ const tools: {
   },
   {
     category: "client",
+    href: "/eq-rewrite",
+    title: "クライアントメッセージ EQ リライト",
+    description:
+      "そのまま送ると冷たく届きそうな文面を、相手にちゃんと感情・温度感が伝わる EQ 高めの文章にAIがリライトします。感謝先出し・相手主語化・選択権を渡す等の設計法則を自動適用。",
+    available: true,
+  },
+  {
+    category: "client",
     href: "/chat-review",
     title: "クライアントワーク添削ツール",
     description:

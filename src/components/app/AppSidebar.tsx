@@ -49,6 +49,11 @@ const SECTIONS: NavSection[] = [
     icon: "💬",
     items: [
       {
+        href: "/eq-rewrite",
+        label: "EQリライト",
+        match: (p) => p.startsWith("/eq-rewrite"),
+      },
+      {
         href: "/chat-review",
         label: "クライアントワーク添削",
         match: (p) => p.startsWith("/chat-review"),
